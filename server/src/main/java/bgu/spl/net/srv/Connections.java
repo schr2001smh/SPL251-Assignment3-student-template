@@ -8,5 +8,5 @@ public interface Connections<T> {
 
     void send(String channel, T msg);
 
-    void disconnect(int connectionId);
+    void disconnect(int connectionId);//note
 }
