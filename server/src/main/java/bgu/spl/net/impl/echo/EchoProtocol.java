@@ -1,12 +1,16 @@
 package bgu.spl.net.impl.echo;
 
 import bgu.spl.net.api.MessagingProtocol;
+import bgu.spl.net.srv.Connections;
+
 import java.time.LocalDateTime;
 
 public class EchoProtocol implements MessagingProtocol<String> {
 
     private boolean shouldTerminate = false;
 
+
+    
     @Override
     public String process(String msg) {
         shouldTerminate = "bye".equals(msg);
