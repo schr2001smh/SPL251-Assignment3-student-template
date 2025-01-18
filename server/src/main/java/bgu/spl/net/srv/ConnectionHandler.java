@@ -13,7 +13,7 @@ import java.io.Closeable;
 public interface ConnectionHandler<T> extends Closeable {
     String channel = "not implemented";
 
-    public String getChannel();
+
 
     /**
      * Comment the following lines (both send methods) for the existing implentations to work.

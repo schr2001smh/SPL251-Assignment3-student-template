@@ -22,6 +22,20 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
         this.protocol = protocol;
     }
 
+
+    @Override
+    public void send(T msg) {
+        try {
+            out.write(encdec.encode(msg));
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        }
+        
+
+
+
     @Override
     public void run() {
         try (Socket sock = this.sock) { //just for automatic closing
