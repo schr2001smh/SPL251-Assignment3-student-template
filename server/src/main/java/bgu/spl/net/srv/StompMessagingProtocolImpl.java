@@ -1,15 +1,16 @@
 package bgu.spl.net.srv;
 
 import bgu.spl.net.api.StompMessagingProtocol;
-import bgu.spl.net.srv.Connections;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.HashSet;
 import java.util.Set;
 
-public class StompMessagingProtocolImpl implements StompMessagingProtocol<String> {
+public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame> {
 
     private int connectionId;
-    private Connections<String> connections;
+    private Connections<Frame> connections;
     private boolean shouldTerminate = false;
     private Set<String> subscribedTopics;
 
@@ -18,16 +19,13 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
     }
 
     @Override
-    public void start(int connectionId, Connections<String> connections) {
+    public void start(int connectionId, Connections<Frame> connections) {
         this.connectionId = connectionId;
         this.connections = connections;
     }
 
     @Override
-    public String process(String message) {
-        // Decode the STOMP frame
-        StompMessageEncoderDecoder s = new StompMessageEncoderDecoder();
-        Frame frame = s.parseFrame(message);
+    public Frame process(Frame frame) {
         String command = frame.getCommand();
 
         // Process based on the STOMP command
@@ -52,59 +50,79 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<String
         return shouldTerminate;
     }
 
-    private String handleConnect(Frame frame) {
+    private Frame handleConnect(Frame frame) {
         String version = frame.getHeaders().get("accept-version");
         if (version == null || !version.equals("1.2")) {
             return buildErrorFrame("Unsupported STOMP version");
         }
 
-        return "CONNECTED\nversion:1.2\n\n\u0000";
+        Map<String, String> headers = new HashMap<>();
+        headers.put("version", "1.2");
+
+        return new Frame("CONNECTED", headers, "");
     }
 
-    private String handleSubscribe(Frame frame) {
+    private Frame handleSubscribe(Frame frame) {
         String destination = frame.getHeaders().get("destination");
         if (destination == null) {
             return buildErrorFrame("Missing destination header for subscription");
         }
 
         subscribedTopics.add(destination);
-        return buildReceiptFrame(frame.getHeaders().get("receipt"));
+
+        String receiptId = frame.getHeaders().get("receipt");
+        if (receiptId != null) {
+            Map<String, String> headers = new HashMap<>();
+            headers.put("receipt-id", receiptId);
+            return new Frame("RECEIPT", headers, "");
+        }
+        return null; // No receipt requested
     }
 
-    private String handleUnsubscribe(Frame frame) {
+    private Frame handleUnsubscribe(Frame frame) {
         String destination = frame.getHeaders().get("destination");
         if (destination == null || !subscribedTopics.contains(destination)) {
             return buildErrorFrame("Cannot unsubscribe from a non-subscribed topic");
         }
 
         subscribedTopics.remove(destination);
-        return buildReceiptFrame(frame.getHeaders().get("receipt"));
+
+        String receiptId = frame.getHeaders().get("receipt");
+        if (receiptId != null) {
+            Map<String, String> headers = new HashMap<>();
+            headers.put("receipt-id", receiptId);
+            return new Frame("RECEIPT", headers, "");
+        }
+        return null; // No receipt requested
     }
 
-    private String handleSend(Frame frame) {
+    private Frame handleSend(Frame frame) {
         String destination = frame.getHeaders().get("destination");
         if (destination == null) {
             return buildErrorFrame("Missing destination header");
         }
 
         // Broadcast the message to all subscribers
-        connections.send(destination, frame.getBody());
+        connections.send(destination, frame);
         return null; // No response to the sender
     }
 
-    private String handleDisconnect(Frame frame) {
+    private Frame handleDisconnect(Frame frame) {
         shouldTerminate = true;
         connections.disconnect(connectionId);
-        return buildReceiptFrame(frame.getHeaders().get("receipt"));
+
+        String receiptId = frame.getHeaders().get("receipt");
+        if (receiptId != null) {
+            Map<String, String> headers = new HashMap<>();
+            headers.put("receipt-id", receiptId);
+            return new Frame("RECEIPT", headers, "");
+        }
+        return null; // No receipt requested
     }
 
-    private String buildErrorFrame(String message) {
-        return "ERROR\nmessage:" + message + "\n\n\u0000";
-    }
-
-    private String buildReceiptFrame(String receiptId) {
-        return receiptId != null
-                ? "RECEIPT\nreceipt-id:" + receiptId + "\n\n\u0000"
-                : null;
+    private Frame buildErrorFrame(String message) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("message", message);
+        return new Frame("ERROR", headers, "");
     }
 }
