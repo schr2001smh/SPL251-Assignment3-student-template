@@ -18,6 +18,7 @@ public class Frame {
         this.command = command;
         this.headers = headers;
         this.body = body;
+        System.out.println("frame created \n"+this.toString());
     }
 
     /**

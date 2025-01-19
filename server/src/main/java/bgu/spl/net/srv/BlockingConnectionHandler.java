@@ -40,7 +40,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     public void run() {
         try (Socket sock = this.sock) { //just for automatic closing
             int read;
-
+            System.out.println("client connected and the handler trying to read");
             in = new BufferedInputStream(sock.getInputStream());
             out = new BufferedOutputStream(sock.getOutputStream());
 
@@ -51,6 +51,8 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
                     
                     if (response != null) {
                         out.write(encdec.encode(response));
+                        System.out.println("handler trying to send!!!!!!!!!! \n"+
+                        encdec.decodeString(encdec.encode(response)));
                         out.flush();
                     }
                 }

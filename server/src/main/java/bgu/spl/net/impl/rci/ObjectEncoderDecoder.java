@@ -75,5 +75,8 @@ public class ObjectEncoderDecoder implements MessageEncoderDecoder<Serializable>
             throw new IllegalArgumentException("cannot serialize object", ex);
         }
     }
+    public String decodeString(byte[] bytes) {
+        return new String(bytes, 0, bytes.length);
+    }
 
 }

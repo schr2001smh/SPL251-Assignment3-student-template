@@ -12,6 +12,7 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
 
     @Override
     public Frame decodeNextByte(byte nextByte) {
+        System.out.println("decoding next byte");
         messageBuilder.append((char) nextByte); // Append the byte as a character
         // If we reach the null character (\u0000), parse the accumulated bytes into a Frame
         if (nextByte == '\u0000') {
@@ -26,7 +27,6 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
     @Override
     public byte[] encode(Frame frame) {
         StringBuilder encodedMessage = new StringBuilder();
-
         // Append the command
         encodedMessage.append(frame.getCommand()).append("\n");
 
@@ -73,10 +73,12 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
             bodyBuilder.append(lines[i]).append("\n");
             i++;
         }
-
         // Remove the trailing newline from the body
         String body = bodyBuilder.toString().trim();
-
         return new Frame(command, headers, body);
+    }
+
+    public String decodeString(byte[] bytes) {
+        return new String(bytes, 0, bytes.length, StandardCharsets.UTF_8);
     }
 }

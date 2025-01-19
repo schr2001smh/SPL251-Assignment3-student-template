@@ -12,11 +12,11 @@ public class EchoClient {
     public static void main(String[] args) throws IOException {
 
         if (args.length == 0) {
-            args = new String[]{"localhost", "CONNECT\r\n" + //
-                                "accept - version :1.2\r\n" + //
-                                "host : stomp . cs . bgu . ac . il\r\n" + //
-                                "login : meni\r\n" + //
-                                "passcode : films"};
+            args = new String[]{"localhost", "CONNECT\n" + //
+                                "accept - version :1.2\n" + //
+                                "host : stomp . cs . bgu . ac . il\n" + //
+                                "login : meni\n" + //
+                                "passcode : films"+ '\u0000'};
         }
 
         if (args.length < 2) {
@@ -25,11 +25,13 @@ public class EchoClient {
         }
 
         //BufferedReader and BufferedWriter automatically using UTF-8 encoding
+        
         try (Socket sock = new Socket(args[0], 7777);
                 BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
                 BufferedWriter out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()))) {
 
             System.out.println("sending message to server");
+            System.out.println(args[1]);
             out.write(args[1]);
             out.newLine();
             out.flush();

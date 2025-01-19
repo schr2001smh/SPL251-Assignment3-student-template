@@ -28,7 +28,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
     @Override
     public Frame process(Frame frame) {
         String command = frame.getCommand();
-
+        System.out.println("Processing frame with command: " + command);
         // Process based on the STOMP command
         switch (command) {
             case "CONNECT":
@@ -52,14 +52,14 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
     }
 
     private Frame handleConnect(Frame frame) {
-        String version = frame.getHeaders().get("accept-version");
+        System.out.println("this is the frame with null version?? \n" + frame.toString());
+        String version = frame.getHeaders().get("accept - version");
         if (version == null || !version.equals("1.2")) {
             return buildErrorFrame("Unsupported STOMP version");
         }
 
         Map<String, String> headers = new HashMap<>();
         headers.put("version", "1.2");
-
         return new Frame("CONNECTED", headers, "");
     }
 
@@ -124,6 +124,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
     private Frame buildErrorFrame(String message) {
         Map<String, String> headers = new HashMap<>();
         headers.put("message", message);
+        System.out.println("PRINITNG ERROR FROM PROTOCOL   "+message);
         return new Frame("ERROR", headers, "");
     }
 }

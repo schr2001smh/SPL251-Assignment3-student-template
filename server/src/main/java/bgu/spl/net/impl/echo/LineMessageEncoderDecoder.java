@@ -41,4 +41,8 @@ public class LineMessageEncoderDecoder implements MessageEncoderDecoder<String> 
         len = 0;
         return result;
     }
+
+    public String decodeString(byte[] bytes) {
+        return new String(bytes, 0, bytes.length, StandardCharsets.UTF_8);
+    }
 }
