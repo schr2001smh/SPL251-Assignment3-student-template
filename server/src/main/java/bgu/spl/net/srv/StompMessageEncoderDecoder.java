@@ -1,4 +1,4 @@
-package bgu.spl.net.impl.stomp;
+package bgu.spl.net.srv;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 
@@ -18,7 +18,7 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
         if (nextByte == '\u0000') {
             String fullMessage = messageBuilder.toString();
             messageBuilder.setLength(0); // Clear the builder for the next message
-            return parseFrame(fullMessage); // Parse the message
+            return parseFrame(fullMessage) ; // Parse the message
         }
 
         return null; // Message is not complete yet
@@ -48,7 +48,7 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
      * @param message The raw STOMP message as a string.
      * @return A Frame object representing the parsed message.
      */
-    private Frame parseFrame(String message) {
+    public Frame parseFrame(String message) {
         String[] lines = message.split("\n");
 
         // First line is the command
@@ -76,7 +76,7 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
         }
 
         // Remove the trailing newline from the body
-        String body = bodyBuilder.toString().stripTrailing();
+        String body = bodyBuilder.toString().trim();
 
         return new Frame(command, headers, body);
     }
