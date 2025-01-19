@@ -12,6 +12,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public ConnectionsImpl() {
         handlers = new ConcurrentHashMap<>();
         connectionIdCounter = new AtomicInteger(0);
+        System.out.println("ConnectionsImpl created");
     }
     
     public void send(String channel, T msg){

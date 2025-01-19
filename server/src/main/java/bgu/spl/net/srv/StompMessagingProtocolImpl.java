@@ -15,6 +15,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
     private Set<String> subscribedTopics;
 
     public StompMessagingProtocolImpl() {
+        System.out.println("StompMessagingProtocolImpl created");
         subscribedTopics = new HashSet<>();
     }
 

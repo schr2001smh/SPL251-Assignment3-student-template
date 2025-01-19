@@ -34,15 +34,21 @@ public abstract class BaseServer<T> implements Server<T> {
             this.sock = serverSock; //just to be able to close
 
             while (!Thread.currentThread().isInterrupted()) {
+                System.out.println("you can connect now");
                 Socket clientSock = serverSock.accept();
+                System.out.println("client connected");
                 BlockingConnectionHandler<T> handler = new BlockingConnectionHandler<>(
                         clientSock,
                         encdecFactory.get(),
                         protocolFactory.get());
-                execute(handler);
+                new Thread(() -> {
+                    execute(handler);
+                    System.out.println("handler executed");
+                }).start();
             }
         } catch (IOException ex) {
         }
+
 
         System.out.println("server closed!!!");
     }

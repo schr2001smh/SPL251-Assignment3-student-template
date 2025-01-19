@@ -12,7 +12,11 @@ public class EchoClient {
     public static void main(String[] args) throws IOException {
 
         if (args.length == 0) {
-            args = new String[]{"localhost", "hello"};
+            args = new String[]{"localhost", "CONNECT\r\n" + //
+                                "accept - version :1.2\r\n" + //
+                                "host : stomp . cs . bgu . ac . il\r\n" + //
+                                "login : meni\r\n" + //
+                                "passcode : films"};
         }
 
         if (args.length < 2) {

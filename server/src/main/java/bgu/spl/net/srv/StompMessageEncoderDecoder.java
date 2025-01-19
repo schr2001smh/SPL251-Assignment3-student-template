@@ -13,12 +13,11 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
     @Override
     public Frame decodeNextByte(byte nextByte) {
         messageBuilder.append((char) nextByte); // Append the byte as a character
-
         // If we reach the null character (\u0000), parse the accumulated bytes into a Frame
         if (nextByte == '\u0000') {
             String fullMessage = messageBuilder.toString();
             messageBuilder.setLength(0); // Clear the builder for the next message
-            return parseFrame(fullMessage) ; // Parse the message
+            return parseFrame(fullMessage); // Parse the message
         }
 
         return null; // Message is not complete yet
@@ -48,7 +47,7 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
      * @param message The raw STOMP message as a string.
      * @return A Frame object representing the parsed message.
      */
-    private Frame parseFrame(String message) {
+    public Frame parseFrame(String message) {
         String[] lines = message.split("\n");
 
         // First line is the command
