@@ -1,4 +1,5 @@
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/newsfeed/NewsFeed.java
+/workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/echo2/EchoClient.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/echo/EchoProtocol.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/srv/Reactor.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/srv/Frame.java
@@ -8,6 +9,7 @@
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/rci/RemoteCommandInvocationProtocol.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/rci/RCIClient.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/echo/EchoServer.java
+/workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/echo2/EchoServer.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/srv/BaseServer.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/srv/BlockingConnectionHandler.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/srv/ConnectionsImpl.java
@@ -21,6 +23,8 @@
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/newsfeed/FetchNewsCommand.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/api/MessagingProtocol.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/newsfeed/PublishNewsCommand.java
+/workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/echo2/EchoProtocol.java
+/workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/echo2/LineMessageEncoderDecoder.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/srv/Server.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/impl/echo/EchoClient.java
 /workspaces/SPL251-Assignment3-student-template/server/src/main/java/bgu/spl/net/srv/StompMessagingProtocolImpl.java
