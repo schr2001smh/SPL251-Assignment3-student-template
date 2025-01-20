@@ -1,51 +1,147 @@
 package bgu.spl.net.srv;
+
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
-
 
 public class ConnectionsImpl<T> implements Connections<T> {
 
-    private ConcurrentHashMap<Integer, ConnectionHandler<T>> handlers; // connectionId -> handler
-    private AtomicInteger connectionIdCounter;
+    // Singleton instance
+    private static ConnectionsImpl<?> instance;
 
-    public ConnectionsImpl() {
+    // Maps
+    private final ConcurrentHashMap<Integer, ConnectionHandler<T>> handlers; // connectionId -> handler
+    private final ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConnectionHandler<T>>> channels; // channel -> (uniqueId -> handler)
+    private final ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> connectionChannelIds; // connectionId -> (channel -> uniqueId)
+    private final ConcurrentHashMap<String, String> userCredentials; // username -> password
+
+    // Private constructor for Singleton
+    private ConnectionsImpl() {
         handlers = new ConcurrentHashMap<>();
-        connectionIdCounter = new AtomicInteger(0);
+        channels = new ConcurrentHashMap<>();
+        connectionChannelIds = new ConcurrentHashMap<>();
+        userCredentials = new ConcurrentHashMap<>();
         System.out.println("ConnectionsImpl created");
     }
-    
-    public void send(String channel, T msg){
-        
-        for (ConnectionHandler<T> handler : handlers.values()) {
-                handler.send(msg);
+
+    // Singleton getInstance method
+    @SuppressWarnings("unchecked")
+    public static <T> ConnectionsImpl<T> getInstance() {
+        if (instance == null) {
+            synchronized (ConnectionsImpl.class) {
+                if (instance == null) {
+                    instance = new ConnectionsImpl<>();
+                }
+            }
         }
-    }
-    @Override
-    public boolean send(int connectionId, T msg) {
-        ConnectionHandler<T> handler = handlers.get(connectionId);
-        if (handler != null) {
-            handler.send(msg);
-            return true;
-        }
-        return false;
+        return (ConnectionsImpl<T>) instance;
     }
 
-    
-    public void broadcast(T msg) {
-        for (ConnectionHandler<T> handler : handlers.values()) {
-            handler.send(msg);
+    // Add a new channel
+    public boolean addChannel(String channel) {
+        return channels.putIfAbsent(channel, new ConcurrentHashMap<>()) == null;
+    }
+
+    // Subscribe to an existing channel with a unique ID
+    public boolean subscribe(String channel, int connectionId, int uniqueId) {
+        if (!channels.containsKey(channel) || !handlers.containsKey(connectionId)) {
+            return false; // Channel or client does not exist
+        }
+
+        // Add the subscription
+        channels.get(channel).put(uniqueId, handlers.get(connectionId));
+
+        // Map the channel and unique ID to the connection ID
+        connectionChannelIds.computeIfAbsent(connectionId, k -> new ConcurrentHashMap<>()).put(channel, uniqueId);
+
+        return true;
+    }
+
+    // Unsubscribe from a channel using the unique ID
+    public boolean unsubscribe(String channel, int connectionId) {
+        if (!channels.containsKey(channel) || !connectionChannelIds.containsKey(connectionId)) {
+            return false; // Channel or connection does not exist
+        }
+
+        // Retrieve the unique ID for the channel
+        Integer uniqueId = connectionChannelIds.get(connectionId).remove(channel);
+        if (uniqueId != null) {
+            channels.get(channel).remove(uniqueId);
+            if (channels.get(channel).isEmpty()) {
+                channels.remove(channel);
+            }
+        }
+
+        // Clean up the connection-channel map if empty
+        if (connectionChannelIds.get(connectionId).isEmpty()) {
+            connectionChannelIds.remove(connectionId);
+        }
+
+        return true;
+    }
+
+    @Override
+    public void message(String channel, T msg) {
+        ConcurrentHashMap<Integer, ConnectionHandler<T>> subscribers = channels.get(channel);
+        if (subscribers != null) {
+            for (ConnectionHandler<T> handler : subscribers.values()) {
+                handler.message(msg , channel);
+            }
         }
     }
+
+    @Override
+    public void send(String channel, T msg , int connectionId) {
+        int uniqueid =  connectionChannelIds.get(connectionId).get(channel) ;
+        ConcurrentHashMap<Integer, ConnectionHandler<T>> subscribers = channels.get(channel);
+        if (subscribers != null) {
+            for (ConnectionHandler<T> handler : subscribers.values()) {
+                handler.send(msg,uniqueid);
+            }
+        }
+    }
+
+
 
     @Override
     public void disconnect(int connectionId) {
         handlers.remove(connectionId);
+
+        // Remove the connectionId from all subscribed channels
+        if (connectionChannelIds.containsKey(connectionId)) {
+            connectionChannelIds.get(connectionId).forEach((channel, uniqueId) -> {
+                ConcurrentHashMap<Integer, ConnectionHandler<T>> subscribers = channels.get(channel);
+                if (subscribers != null) {
+                    subscribers.remove(uniqueId);
+                    if (subscribers.isEmpty()) {
+                        channels.remove(channel);
+                    }
+                }
+            });
+            connectionChannelIds.remove(connectionId);
+        }
     }
 
-    public int addConnection(ConnectionHandler<T> handler) {
-        int connectionId = connectionIdCounter.incrementAndGet();
+    // Add or validate a connection
+    public boolean addConnection(int connectionId, String username, String password, ConnectionHandler<T> handler) {
+        // Ensure the connectionId is not already in use
+        if (handlers.containsKey(connectionId)) {
+            return false; // Connection ID already in use
+        }
+
+        // Check if the user already exists
+        if (userCredentials.containsKey(username)) {
+            // Validate the password
+            String storedPassword = userCredentials.get(username);
+            if (!storedPassword.equals(password)) {
+                return false; // Incorrect password
+            }
+        } else {
+            // Add a new user
+            userCredentials.put(username, password);
+        }
+
+        // Associate the handler with the connectionId
         handlers.put(connectionId, handler);
-        return connectionId;
+
+        return true;
     }
 }

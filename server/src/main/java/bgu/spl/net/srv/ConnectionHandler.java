@@ -20,6 +20,7 @@ public interface ConnectionHandler<T> extends Closeable {
      *
      */
 
-    void send(T msg);
+    void send(T msg , int id );
+    void message(T msg , String channelName  );
 
 }
