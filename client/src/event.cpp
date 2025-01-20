@@ -8,7 +8,16 @@
 #include <sstream>
 #include <cstring>
 
-#include "../include/keyboardInput.h"
+// Function to split a string by a delimiter
+void split_str(const std::string &s, char delimiter, std::vector<std::string> &tokens) {
+    std::string token;
+    std::istringstream tokenStream(s);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+}
+
+//#include "../../include/keyboardInput.h"
 
 using namespace std;
 using json = nlohmann::json;
