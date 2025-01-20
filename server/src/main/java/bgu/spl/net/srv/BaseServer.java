@@ -19,7 +19,7 @@ public abstract class BaseServer<T> implements Server<T> {
             int port,
             Supplier<MessagingProtocol<T>> protocolFactory,
             Supplier<MessageEncoderDecoder<T>> encdecFactory) {
-        connections = new ConnectionsImpl();
+        connections =ConnectionsImpl.getInstance();
         this.port = port;
         this.protocolFactory = protocolFactory;
         this.encdecFactory = encdecFactory;
