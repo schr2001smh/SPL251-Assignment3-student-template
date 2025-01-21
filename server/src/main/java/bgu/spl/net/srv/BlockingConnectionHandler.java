@@ -6,32 +6,29 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler<T> {
-
-    private final MessagingProtocol<T> protocol;
+    private int connectionId ;
+    private final StompMessagingProtocolImpl protocol;
     private final MessageEncoderDecoder<T> encdec;
     private final Socket sock;
     private BufferedInputStream in;
     private BufferedOutputStream out;
     private volatile boolean connected = true;
+    private Connections<Frame> connections;
 
-    public BlockingConnectionHandler(Socket sock, MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol) {
+    public BlockingConnectionHandler(int connectionId ,Socket sock,
+     MessageEncoderDecoder<T> reader, MessagingProtocol<T> protocol) {
         this.sock = sock;
         this.encdec = reader;
-        this.protocol = protocol;
+        this.protocol = new StompMessagingProtocolImpl(connectionId);
+       this.connectionId = connectionId ;
     }
 
 
-    @Override
-    public void send(T msg) {
-        try {
-            out.write(encdec.encode(msg));
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        }
+
         
 
 
@@ -47,7 +44,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 T nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
-                    T response = protocol.process(nextMessage);
+                    Frame response = protocol.process((Frame)nextMessage);
                     
                     if (response != null) {
                         out.write(encdec.encode(response));
@@ -69,6 +66,35 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
         connected = false;
         sock.close();
     }
+
+
+  @Override
+public void send(T msg, int id, String channel) {
+    try {
+        // Generate a unique message ID (e.g., using a counter or timestamp)
+        String messageId = String.valueOf(System.currentTimeMillis());
+
+        // Construct the headers for the MESSAGE frame
+        Map<String, String> headers = new HashMap<>();
+        headers.put("subscription", String.valueOf(id)); // Subscription ID
+        headers.put("message-id", messageId);           // Unique message ID
+        headers.put("destination", channel);            // Destination/channel name
+
+        // Create a Frame object for the MESSAGE frame
+        Frame messageFrame = new Frame("MESSAGE", headers, msg.toString());
+
+        // Encode the Frame into bytes
+        byte[] encodedFrame = encdec.encode( messageFrame);
+
+        // Write the encoded frame to the output stream
+        synchronized (this) { // Synchronize to ensure thread safety when writing
+            out.write(encodedFrame);
+            out.flush(); // Flush to ensure the data is sent immediately
+        }
+    } catch (IOException e) {
+        e.printStackTrace(); // Handle any I/O exceptions during writing
+    }
+}
 
  
 }

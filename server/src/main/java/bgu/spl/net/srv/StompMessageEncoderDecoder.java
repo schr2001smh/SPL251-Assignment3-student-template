@@ -47,7 +47,7 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
      * @param message The raw STOMP message as a string.
      * @return A Frame object representing the parsed message.
      */
-    public Frame parseFrame(String message) {
+    private Frame parseFrame(String message) {
         String[] lines = message.split("\n");
 
         // First line is the command

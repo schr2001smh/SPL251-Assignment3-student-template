@@ -78,32 +78,27 @@ public class ConnectionsImpl<T> implements Connections<T> {
         return true;
     }
 
-    @Override
-    public void message(String channel, T msg) {
-        ConcurrentHashMap<Integer, ConnectionHandler<T>> subscribers = channels.get(channel);
-        if (subscribers != null) {
-            for (ConnectionHandler<T> handler : subscribers.values()) {
-                handler.message(msg , channel);
-            }
-        }
-    }
+
 
     @Override
-    public void send(String channel, T msg , int connectionId) {
+    public boolean send(String channel, T msg , int connectionId) {
         int uniqueid =  connectionChannelIds.get(connectionId).get(channel) ;
         ConcurrentHashMap<Integer, ConnectionHandler<T>> subscribers = channels.get(channel);
         if (subscribers != null) {
+
             for (ConnectionHandler<T> handler : subscribers.values()) {
-                handler.send(msg,uniqueid);
+                handler.send(msg,uniqueid , channel);
             }
+            return true ;
         }
+        return false ;
     }
 
 
 
     @Override
-    public void disconnect(int connectionId) {
-        handlers.remove(connectionId);
+    public boolean disconnect(int connectionId) {
+       
 
         // Remove the connectionId from all subscribed channels
         if (connectionChannelIds.containsKey(connectionId)) {
@@ -117,11 +112,19 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 }
             });
             connectionChannelIds.remove(connectionId);
+            return true ;
         }
+        return false ;
     }
-
+   public void addHandler(ConnectionHandler<T> handler,int connectionId )
+   {
+    if(handlers.get(connectionId)== null )
+    {
+    handlers.put(connectionId, handler);
+    }
+   }
     // Add or validate a connection
-    public boolean addConnection(int connectionId, String username, String password, ConnectionHandler<T> handler) {
+    public boolean addConnection(int connectionId, String username, String password) {
         // Ensure the connectionId is not already in use
         if (handlers.containsKey(connectionId)) {
             return false; // Connection ID already in use
@@ -138,10 +141,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
             // Add a new user
             userCredentials.put(username, password);
         }
-
-        // Associate the handler with the connectionId
-        handlers.put(connectionId, handler);
-
         return true;
     }
-}
+} 

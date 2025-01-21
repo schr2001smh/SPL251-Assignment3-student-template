@@ -1,5 +1,6 @@
 package bgu.spl.net.srv;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class Frame {
