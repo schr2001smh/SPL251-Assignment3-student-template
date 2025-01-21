@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <thread>
+#include <algorithm>
+#include <cctype>
+#include <locale>
 #include "../include/ConnectionHandler.h"
 
 /**
@@ -41,7 +44,7 @@ std::string handleConnect(const std::string& str) {
 
 std::string handleSend(const std::string& str) {
     std::istringstream stream(str);
-    std::string command, destination, body,id;
+    std::string command, destination, body, id;
     stream >> command >> destination >> id;
     std::getline(stream, body);
     std::string frame = "SEND\n";
@@ -51,11 +54,29 @@ std::string handleSend(const std::string& str) {
     return frame;
 }
 
+// Helper function to trim whitespace from both ends of a string
+static inline void trim(std::string &s) {
+    // Trim from the start (left)
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }));
+    // Trim from the end (right)
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+}
+
 std::string handleSubscribe(const std::string& str) {
     static int id = 0;
     std::istringstream stream(str);
     std::string command, destination, additionalParam;
     stream >> command >> destination >> additionalParam;
+
+    // Trim the input values
+    trim(command);
+    trim(destination);
+    trim(additionalParam);
+
     std::string frame = "SUBSCRIBE\n";
     frame += "destination:" + destination + "\n";
     frame += "id:" + additionalParam + "\n";

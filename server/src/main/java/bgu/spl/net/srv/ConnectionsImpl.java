@@ -127,7 +127,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     // Add or validate a connection
     public boolean addConnection(int connectionId, String username, String password) {
         // Ensure the connectionId is not already in use
-        if (handlers.containsKey(connectionId)) {
+        if (connectionChannelIds.containsKey(connectionId)) {
             return false; // Connection ID already in use
         }
 

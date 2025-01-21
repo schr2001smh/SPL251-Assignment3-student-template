@@ -3,6 +3,7 @@ package bgu.spl.net.srv;
 import bgu.spl.net.api.MessageEncoderDecoder;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,42 +42,49 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
         return encodedMessage.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    /**
-     * Parses a STOMP message into a Frame object.
-     *
-     * @param message The raw STOMP message as a string.
-     * @return A Frame object representing the parsed message.
-     */
-    private Frame parseFrame(String message) {
-        String[] lines = message.split("\n");
+/**
+ * Parses a STOMP message into a Frame object.
+ *
+ * @param message The raw STOMP message as a string.
+ * @return A Frame object representing the parsed message.
+ */
+private Frame parseFrame(String message) {
+    // Trim the input message to remove leading/trailing whitespace characters
+    message = message.trim();
 
-        // First line is the command
-        String command = lines[0];
+    String[] lines = message.split("\n");
 
-        // Parse headers
-        Map<String, String> headers = new HashMap<>();
-        int i = 1;
-        while (i < lines.length && !lines[i].isEmpty()) {
-            String[] parts = lines[i].split(":", 2);
-            if (parts.length == 2) {
-                headers.put(parts[0].trim(), parts[1].trim());
-            }
-            i++;
-        }
-
-        // Skip the blank line separating headers and body
-        i++;
-
-        // Remaining lines are the body
-        StringBuilder bodyBuilder = new StringBuilder();
-        while (i < lines.length && !lines[i].equals("\u0000")) {
-            bodyBuilder.append(lines[i]).append("\n");
-            i++;
-        }
-        // Remove the trailing newline from the body
-        String body = bodyBuilder.toString().trim();
-        return new Frame(command, headers, body);
+    // Check if the first line is a null character or empty string and remove it
+    if (lines.length > 0 && (lines[0].isEmpty() || lines[0].charAt(0) == '\u0000')) {
+        lines = Arrays.copyOfRange(lines, 1, lines.length);
     }
+
+    // First line is the command
+    if (lines.length == 0) {
+        return null; // No command found
+    }
+    String command = lines[0];
+
+    // Parse headers
+    Map<String, String> headers = new HashMap<>();
+    int i = 1;
+    while (i < lines.length && !lines[i].isEmpty()) {
+        String[] parts = lines[i].split(":", 2);
+        if (parts.length == 2) {
+            headers.put(parts[0].trim(), parts[1].trim());
+        }
+        i++;
+    }
+
+    // Parse body
+    StringBuilder body = new StringBuilder();
+    while (i < lines.length) {
+        body.append(lines[i]).append("\n");
+        i++;
+    }
+
+    return new Frame(command, headers, body.toString().trim());
+}
 
     public String decodeString(byte[] bytes) {
         return new String(bytes, 0, bytes.length, StandardCharsets.UTF_8);
