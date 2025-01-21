@@ -16,7 +16,7 @@ ConnectionHandler::~ConnectionHandler() {
 }
 
 bool ConnectionHandler::connect() {
-	std::cout << "Starting connect to "
+	std::cout << "TRYING connection handler connecting to "
 	          << host_ << ":" << port_ << std::endl;
 	try {
 		tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_); // the server endpoint
@@ -29,6 +29,7 @@ bool ConnectionHandler::connect() {
 		std::cerr << "Connection failed (Error: " << e.what() << ')' << std::endl;
 		return false;
 	}
+    std::cout << "connected successfully" << std::endl;
 	return true;
 }
 
@@ -49,6 +50,7 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 }
 
 bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
+    std::cout << "sending " << bytesToWrite << " bytes to server" << std::endl;
 	int tmp = 0;
 	boost::system::error_code error;
 	try {
