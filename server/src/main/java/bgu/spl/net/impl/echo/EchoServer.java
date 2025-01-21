@@ -10,7 +10,7 @@ public class EchoServer {
         // you can use any server... 
         Server.threadPerClient(
                 7777, //port
-                () -> new bgu.spl.net.srv.StompMessagingProtocolImpl(), //protocol factory
+                () -> new bgu.spl.net.srv.StompMessagingProtocolImpl(1), //protocol factory
                 () -> new bgu.spl.net.srv.StompMessageEncoderDecoder() //message encoder decoder factory
         ).serve();
 
