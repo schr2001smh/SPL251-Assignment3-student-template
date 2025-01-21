@@ -1,5 +1,7 @@
 package bgu.spl.net.srv;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ConnectionsImpl<T> implements Connections<T> {
@@ -12,6 +14,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     private final ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConnectionHandler<T>>> channels; // channel -> (uniqueId -> handler)
     private final ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> connectionChannelIds; // connectionId -> (channel -> uniqueId)
     private final ConcurrentHashMap<String, String> userCredentials; // username -> password
+    private final List<Integer> online;
 
     // Private constructor for Singleton
     private ConnectionsImpl() {
@@ -19,6 +22,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         channels = new ConcurrentHashMap<>();
         connectionChannelIds = new ConcurrentHashMap<>();
         userCredentials = new ConcurrentHashMap<>();
+        online = new ArrayList<>();
         System.out.println("ConnectionsImpl created");
     }
 
@@ -127,9 +131,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
     // Add or validate a connection
     public boolean addConnection(int connectionId, String username, String password) {
         // Ensure the connectionId is not already in use
-        if (connectionChannelIds.containsKey(connectionId)) {
+        if (online.contains(connectionId)) {
             return false; // Connection ID already in use
         }
+        online.add(connectionId);
 
         // Check if the user already exists
         if (userCredentials.containsKey(username)) {

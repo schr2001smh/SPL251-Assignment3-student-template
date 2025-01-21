@@ -54,7 +54,6 @@ bool ConnectionHandler::getBytes(char bytes[], unsigned int bytesToRead) {
 }
 
 bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
-    std::cout << "sending " << bytesToWrite << " bytes to server" << std::endl;
     int tmp = 0;
     boost::system::error_code error;
     try {

@@ -166,8 +166,8 @@ int main (int argc, char *argv[]) {
         std::string lineStr(line);
         std::string myFrame = stringToFrame(line);
         
-        std::cout << "THE LINE YOU WROTE IS  ======"+ lineStr +"\n" << std::endl;
-        std::cout << "THE COMMAND YOU WROTE IS  ======"+ myFrame +"\n" << std::endl;
+        std::cout << "THE LINE YOU WROTE IS  ====== \n"+ lineStr +"\n" << std::endl;
+        std::cout << "THE COMMAND YOU WROTE IS  ====== \n"+ myFrame +"\n" << std::endl;
         
         if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
             std::cout << "Disconnected. Exiting...\n" << std::endl;
