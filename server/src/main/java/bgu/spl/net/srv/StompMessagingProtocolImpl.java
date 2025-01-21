@@ -55,6 +55,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
     }
 
     private Frame handleConnect(Frame frame) {
+        System.out.println("connections frame " + frame);
         // Parse the "accept-version" header
         String version = frame.getHeaders().get("accept-version");
         if (version == null || !version.equals("1.2")) {
