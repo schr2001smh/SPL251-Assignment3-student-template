@@ -1,5 +1,7 @@
 package bgu.spl.net.api;
 
+import bgu.spl.net.srv.Frame;
+
 public interface MessageEncoderDecoder<T> {
 
     /**
@@ -17,7 +19,7 @@ public interface MessageEncoderDecoder<T> {
      * @param message the message to encode
      * @return the encoded bytes
      */
-    byte[] encode(T message);
+    byte[] encode(Frame  message);
 
 
      String decodeString(byte[] bytes);

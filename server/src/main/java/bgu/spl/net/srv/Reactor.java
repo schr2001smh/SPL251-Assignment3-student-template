@@ -34,11 +34,12 @@ public class Reactor<T> implements Server<T> {
         this.port = port;
         this.protocolFactory = protocolFactory;
         this.readerFactory = readerFactory;
-        this.connections = new ConnectionsImpl();
+        this.connections = ConnectionsImpl.getInstance();
     }
 
     @Override
     public void serve() {
+        int connectionId = 0 ;
 	selectorThread = Thread.currentThread();
         try (Selector selector = Selector.open();
                 ServerSocketChannel serverSock = ServerSocketChannel.open()) {
@@ -60,7 +61,8 @@ public class Reactor<T> implements Server<T> {
                     if (!key.isValid()) {
                         continue;
                     } else if (key.isAcceptable()) {
-                        handleAccept(serverSock, selector);
+                        handleAccept(connectionId,serverSock, selector );
+                        connectionId++;
                     } else {
                         handleReadWrite(key);
                     }
@@ -94,14 +96,15 @@ public class Reactor<T> implements Server<T> {
     }
 
 
-    private void handleAccept(ServerSocketChannel serverChan, Selector selector) throws IOException {
+    private void handleAccept(int connectionId, ServerSocketChannel serverChan, Selector selector) throws IOException {
         SocketChannel clientChan = serverChan.accept();
         clientChan.configureBlocking(false);
         final NonBlockingConnectionHandler<T> handler = new NonBlockingConnectionHandler<>(
-                readerFactory.get(),
+                connectionId ,readerFactory.get(),
                 protocolFactory.get(),
                 clientChan,
                 this);
+                connections.addHandler(handler, connectionId);
         clientChan.register(selector, SelectionKey.OP_READ, handler);
     }
 

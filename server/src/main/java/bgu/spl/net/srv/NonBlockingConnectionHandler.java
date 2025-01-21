@@ -7,28 +7,32 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
-
+    private int connectionId ;
     private static final int BUFFER_ALLOCATION_SIZE = 1 << 13; //8k
     private static final ConcurrentLinkedQueue<ByteBuffer> BUFFER_POOL = new ConcurrentLinkedQueue<>();
 
-    private final MessagingProtocol<T> protocol;
+    private final StompMessagingProtocolImpl protocol;
     private final MessageEncoderDecoder<T> encdec;
     private final Queue<ByteBuffer> writeQueue = new ConcurrentLinkedQueue<>();
     private final SocketChannel chan;
     private final Reactor reactor;
 
     public NonBlockingConnectionHandler(
+        int connectionId ,
             MessageEncoderDecoder<T> reader,
             MessagingProtocol<T> protocol,
             SocketChannel chan,
             Reactor reactor) {
+        this.connectionId = connectionId ;       
         this.chan = chan;
         this.encdec = reader;
-        this.protocol = protocol;
+        this.protocol = new StompMessagingProtocolImpl(connectionId);
         this.reactor = reactor;
     }
 
@@ -49,7 +53,7 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
                     while (buf.hasRemaining()) {
                         T nextMessage = encdec.decodeNextByte(buf.get());
                         if (nextMessage != null) {
-                            T response = protocol.process(nextMessage);
+                            Frame response = protocol.process((Frame)nextMessage);
                             if (response != null) {
                                 writeQueue.add(ByteBuffer.wrap(encdec.encode(response)));
                                 reactor.updateInterestedOps(chan, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
@@ -118,15 +122,29 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
 
   
 
-    @Override
-    public void send(T msg, int id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'send'");
-    }
+@Override
+public void send(T msg, int id, String channel) {
+    // Generate a unique message ID (e.g., using a counter or timestamp)
+    String messageId = String.valueOf(System.currentTimeMillis());
 
-    @Override
-    public void message(T msg, String channelName) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'message'");
-    }
+    // Construct the headers for the MESSAGE frame
+    Map<String, String> headers = new HashMap<>();
+    headers.put("subscription", String.valueOf(id)); // Subscription ID
+    headers.put("message-id", messageId);           // Unique message ID
+    headers.put("destination", channel);            // Destination/channel name
+
+    // Create a Frame object for the MESSAGE frame
+    Frame messageFrame = new Frame("MESSAGE", headers, msg.toString());
+
+    // Encode the Frame into bytes using the MessageEncoderDecoder
+    byte[] encodedFrame = encdec.encode( messageFrame);
+
+    // Add the encoded frame to the write queue
+    writeQueue.add(ByteBuffer.wrap(encodedFrame));
+
+    // Notify the reactor to monitor write readiness
+    reactor.updateInterestedOps(chan, SelectionKey.OP_WRITE);
+}
+
+
 }

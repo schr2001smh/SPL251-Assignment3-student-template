@@ -10,55 +10,70 @@ import java.util.function.Supplier;
 public abstract class BaseServer<T> implements Server<T> {
 
     private final int port;
-    private final Supplier<MessagingProtocol<T>> protocolFactory;
     private final Supplier<MessageEncoderDecoder<T>> encdecFactory;
-    private ConnectionsImpl connections;
+    private final Supplier<MessagingProtocol<T>> protocolFactory;
+    private final ConnectionsImpl connections;
     private ServerSocket sock;
 
     public BaseServer(
             int port,
             Supplier<MessagingProtocol<T>> protocolFactory,
             Supplier<MessageEncoderDecoder<T>> encdecFactory) {
-        connections =ConnectionsImpl.getInstance();
         this.port = port;
         this.protocolFactory = protocolFactory;
         this.encdecFactory = encdecFactory;
-		this.sock = null;
+        this.connections = ConnectionsImpl.getInstance();
+        this.sock = null;
     }
 
     @Override
     public void serve() {
-
+        int connectionId = 0;
         try (ServerSocket serverSock = new ServerSocket(port)) {
-			System.out.println("Server started");
-            this.sock = serverSock; //just to be able to close
+            System.out.println("Server started");
+            this.sock = serverSock; // Assign the server socket for later closing
 
             while (!Thread.currentThread().isInterrupted()) {
-                System.out.println("you can connect now");
-                Socket clientSock = serverSock.accept();
-                System.out.println("client connected");
+                System.out.println("Waiting for client connection...");
+                Socket clientSock = serverSock.accept(); // Blocking call
+                System.out.println("Client connected");
+
+                // Create a new connection handler for the client
                 BlockingConnectionHandler<T> handler = new BlockingConnectionHandler<>(
+                        connectionId,
                         clientSock,
                         encdecFactory.get(),
-                        protocolFactory.get());
-                new Thread(() -> {
-                    execute(handler);
-                    System.out.println("handler executed");
-                }).start();
+                        protocolFactory.get()
+                );
+
+                // Add the handler to connections for tracking
+                connections.addHandler(handler, connectionId);
+                connectionId++;
+
+                // Execute the handler (thread-per-client behavior)
+                execute(handler);
             }
         } catch (IOException ex) {
+            System.err.println("Error occurred while running the server: " + ex.getMessage());
+            ex.printStackTrace();
         }
 
-
-        System.out.println("server closed!!!");
+        System.out.println("Server shutting down...");
     }
 
     @Override
     public void close() throws IOException {
-		if (sock != null)
-			sock.close();
+        if (sock != null) {
+            System.out.println("Closing server socket...");
+            sock.close();
+        }
     }
 
-    protected abstract void execute(BlockingConnectionHandler<T>  handler);
-
+    /**
+     * This method is implemented by subclasses to determine how the handler is executed.
+     * For example, it can start a new thread or use an executor service.
+     *
+     * @param handler the connection handler to execute
+     */
+    protected abstract void execute(BlockingConnectionHandler<T> handler);
 }
