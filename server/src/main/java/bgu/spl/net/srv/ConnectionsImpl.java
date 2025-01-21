@@ -36,13 +36,17 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     // Add a new channel
-    public boolean addChannel(String channel) {
+    private boolean addChannel(String channel) {
         return channels.putIfAbsent(channel, new ConcurrentHashMap<>()) == null;
     }
 
     // Subscribe to an existing channel with a unique ID
     public boolean subscribe(String channel, int connectionId, int uniqueId) {
-        if (!channels.containsKey(channel) || !handlers.containsKey(connectionId)) {
+        if (!channels.containsKey(channel))
+        {
+        addChannel(channel) ;
+        }
+       if  ( !handlers.containsKey(connectionId)) {
             return false; // Channel or client does not exist
         }
 
@@ -70,10 +74,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
             }
         }
 
-        // Clean up the connection-channel map if empty
-        if (connectionChannelIds.get(connectionId).isEmpty()) {
-            connectionChannelIds.remove(connectionId);
-        }
+    
 
         return true;
     }

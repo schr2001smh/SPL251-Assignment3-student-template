@@ -105,12 +105,11 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
         }
 
         if (!connections.subscribe(destination, this.connectionId, uniqueId)) {
-            // Return an ERROR frame if the subscription fails
-            subscribedTopics.add(destination) ;
-            subscriptionId.put(uniqueId,destination) ;
+
             return buildErrorFrame("Failed to subscribe to channel: " + destination, this.connectionId);
         }
-    
+        subscribedTopics.add(destination) ;
+        subscriptionId.put(uniqueId,destination) ;
             return createReceiptFrame(uniqueId);
     }
     
