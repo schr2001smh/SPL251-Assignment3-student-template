@@ -24,41 +24,34 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
         this.sock = sock;
         this.encdec = reader;
         this.protocol = new StompMessagingProtocolImpl(connectionId);
-       this.connectionId = connectionId ;
+    this.connectionId = connectionId;
     }
-
-
-
-        
-
-
 
     @Override
     public void run() {
-        try (Socket sock = this.sock) { //just for automatic closing
-            int read;
-            System.out.println("client connected and the handler trying to read");
-            in = new BufferedInputStream(sock.getInputStream());
-            out = new BufferedOutputStream(sock.getOutputStream());
+    try (Socket sock = this.sock) { //just for automatic closing
+        int read;
+        System.out.println("client connected and the handler trying to read");
+        in = new BufferedInputStream(sock.getInputStream());
+        out = new BufferedOutputStream(sock.getOutputStream());
 
-            while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
-                T nextMessage = encdec.decodeNextByte((byte) read);
-                if (nextMessage != null) {
-                    Frame response = protocol.process((Frame)nextMessage);
-                    
-                    if (response != null) {
-                        out.write(encdec.encode(response));
-                        System.out.println("handler trying to send!!!!!!!!!! \n"+
-                        encdec.decodeString(encdec.encode(response)));
-                        out.flush();
-                    }
-                }
+        while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
+        T nextMessage = encdec.decodeNextByte((byte) read);
+
+        if (nextMessage != null) {
+            Frame response = protocol.process((Frame) nextMessage);
+            if (response != null) {
+            out.write(encdec.encode(response));
+            System.out.println("handler trying to send!!!!!!!!!! \n" +
+                encdec.decodeString(encdec.encode(response)));
+            out.flush();
             }
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        }
         }
 
+    } catch (IOException ex) {
+        ex.printStackTrace();
+    }
     }
 
     @Override

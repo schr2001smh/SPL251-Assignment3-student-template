@@ -32,7 +32,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
     public Frame process(Frame frame) {
         String command = frame.getCommand();
         System.out.println("Processing frame with command: " + command);
-
         switch (command) {
             case "CONNECT":
                 return handleConnect(frame);
@@ -171,8 +170,8 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
         {
             return buildErrorFrame("could not disconnect", connectionId);
         }
-
-return createReceiptFrame(connectionId);
+        
+        return createReceiptFrame(connectionId);
     }
     
 

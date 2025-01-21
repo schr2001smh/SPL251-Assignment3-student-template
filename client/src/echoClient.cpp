@@ -10,8 +10,11 @@
 */
 
 void listenToServer(ConnectionHandler& connectionHandler) {
+
     while (true) {
+
         std::string answer;
+
         if (!connectionHandler.getLine(answer)) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
@@ -21,7 +24,7 @@ void listenToServer(ConnectionHandler& connectionHandler) {
         if (len > 0) {
             answer.resize(len - 1); // Remove the newline character
         }
-        std::cout << "Reply: " << answer << " " << len << " bytes " << std::endl << std::endl;
+        std::cout << answer << " "  << std::endl << std::endl;
         if (answer == "bye") {
             std::cout << "Exiting...\n" << std::endl;
             break;
@@ -95,9 +98,11 @@ std::string handleUnsubscribe(const std::string& str) {
 }
 
 std::string handleDisconnect(const std::string& str) {
-    static int receiptId = 0;
+    std::istringstream stream(str);
+    std::string command, receipt;
+    stream >> command >> receipt;
     std::string frame = "DISCONNECT\n";
-    frame += "receipt:" + std::to_string(receiptId++) + "\n";
+    frame += "receipt:" + receipt + "\n";
     frame += '\u0000';
     return frame;
 }
@@ -111,15 +116,15 @@ std::string stringToFrame(const std::string& str) {
     std::istringstream stream(str);
     stream >> firstWord;
 
-    if (firstWord == "CONNECT") {
+    if (firstWord == "connect") {
         return handleConnect(str);
-    } else if (firstWord == "SEND") {
+    } else if (firstWord == "send") {
         return handleSend(str);
-    } else if (firstWord == "SUBSCRIBE") {
+    } else if (firstWord == "subscribe") {
         return handleSubscribe(str);
-    } else if (firstWord == "UNSUBSCRIBE") {
+    } else if (firstWord == "unsubscribe") {
         return handleUnsubscribe(str);
-    } else if (firstWord == "DISCONNECT") {
+    } else if (firstWord == "logout") {
         return handleDisconnect(str);
     } else {
         return handleError(str);
@@ -144,7 +149,7 @@ int main (int argc, char *argv[]) {
     std::string connectMessage = "CONNECT\n"
                                  "accept-version:1.2\n"
                                  "host:stomp.cs.bgu.ac.il\n"
-                                 "login:meni\n"
+                                 "login:meni3\n"
                                  "passcode:films" + std::string(1, '\u0000');
 
     if (!connectionHandler.sendLine(connectMessage)) {
@@ -174,7 +179,6 @@ int main (int argc, char *argv[]) {
             break;
         }
         // connectionHandler.sendLine(myFrame) appends '\n' to the message. Therefore we send len+1 bytes.
-        std::cout << "Sent " << myFrame.length()+1 << " bytes to server" << std::endl;
     }
 
     // Wait for the listener thread to finish

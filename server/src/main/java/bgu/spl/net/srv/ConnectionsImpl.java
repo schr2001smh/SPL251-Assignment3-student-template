@@ -50,9 +50,9 @@ public class ConnectionsImpl<T> implements Connections<T> {
         {
         addChannel(channel) ;
         }
-       if  ( !handlers.containsKey(connectionId)) {
-            return false; // Channel or client does not exist
-        }
+    //    if  ( !handlers.containsKey(connectionId)) {
+    //         return false; // Channel or client does not exist
+    //     }
 
         // Add the subscription
         channels.get(channel).put(uniqueId, handlers.get(connectionId));
@@ -103,8 +103,9 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public boolean disconnect(int connectionId) {
-       
-
+        if (online.contains(connectionId)) {
+            online.remove(connectionId);
+        }
         // Remove the connectionId from all subscribed channels
         if (connectionChannelIds.containsKey(connectionId)) {
             connectionChannelIds.get(connectionId).forEach((channel, uniqueId) -> {
@@ -116,11 +117,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
                     }
                 }
             });
-            connectionChannelIds.remove(connectionId);
-            return true ;
+
         }
-        return false ;
+        handlers.remove(connectionId);
+        connectionChannelIds.remove(connectionId);
+        
+        return true ;
     }
+
    public void addHandler(ConnectionHandler<T> handler,int connectionId )
    {
     if(handlers.get(connectionId)== null )
