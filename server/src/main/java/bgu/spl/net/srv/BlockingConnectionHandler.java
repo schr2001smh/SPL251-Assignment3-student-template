@@ -78,11 +78,16 @@ public void send(T msg, int id, String channel) {
         Frame messageFrame = new Frame("MESSAGE", headers, msg.toString());
 
         // Encode the Frame into bytes
-        byte[] encodedFrame = encdec.encode( messageFrame);
+        byte[] encodedFrame = encdec.encode(messageFrame);
 
         // Write the encoded frame to the output stream
         synchronized (this) { // Synchronize to ensure thread safety when writing
-            out.write(encodedFrame);
+            int totalBytesWritten = 0;
+            int bytesToWrite = encodedFrame.length;
+            while (totalBytesWritten < bytesToWrite) {
+                out.write(encodedFrame, totalBytesWritten, bytesToWrite - totalBytesWritten);
+                totalBytesWritten = bytesToWrite; // All bytes are written in one call
+            }
             out.flush(); // Flush to ensure the data is sent immediately
         }
     } catch (IOException e) {
