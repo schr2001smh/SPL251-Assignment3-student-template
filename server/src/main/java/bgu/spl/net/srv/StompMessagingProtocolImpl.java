@@ -113,43 +113,45 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
             return createReceiptFrame(uniqueId);
     }
     
-
+    ///////////////////////////////////////////
+    ///////////////////////////////////////////
+    
     private Frame handleUnsubscribe(Frame frame) {
         // Parse the "id" header (unique subscription ID)
         String uniqueIdStr = frame.getHeaders().get("id");
+
         if (uniqueIdStr == null) {
             // Return an ERROR frame if the "id" header is missing
             return buildErrorFrame("Missing unique subscription ID (id header)", this.connectionId);
         }
-    
         // Convert the unique ID to an integer
-        int uniqueId;
+        int subscribtionid;
         try {
-            uniqueId = Integer.parseInt(uniqueIdStr);
+            subscribtionid = Integer.parseInt(uniqueIdStr);
         } catch (NumberFormatException e) {
             // Return an ERROR frame if the "id" header is not a valid integer
             return buildErrorFrame("Invalid unique subscription ID: " + uniqueIdStr, this.connectionId);
         }
-    
+
         // Look up and remove the subscription from the map
-        String destination = subscriptionId.get(uniqueId);
+        String destination = subscriptionId.get(subscribtionid);
         if (destination == null) {
             // Return an ERROR frame if no subscription exists for the given ID
-            return buildErrorFrame("No subscription found for ID: " + uniqueId, this.connectionId);
+            return buildErrorFrame("No subscription found for ID: " + subscribtionid, this.connectionId);
         }
-    
         // Notify connections to unsubscribe (if necessary)
-       if( !connections.unsubscribe(destination, this.connectionId))
+       if( !connections.unsubscribe(destination, this.connectionId,subscribtionid))
        {
-        return buildErrorFrame("did not unsuscribe ", uniqueId) ;
+        return buildErrorFrame("did not unsuscribe ", subscribtionid) ;
        }
        subscribedTopics.remove(destination) ;
-       subscriptionId.remove(uniqueId) ;
-       return createReceiptFrame(uniqueId); 
-
+       subscriptionId.remove(subscribtionid) ;
+       return createReceiptFrame(subscribtionid); 
     }
-    
 
+    ///////////////////////////////////////////
+    ///////////////////////////////////////////
+    
     private Frame handleSend(Frame frame) {
         String destination = frame.getHeaders().get("destination");
         if (destination == null) {

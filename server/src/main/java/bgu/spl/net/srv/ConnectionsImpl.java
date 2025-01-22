@@ -10,10 +10,19 @@ public class ConnectionsImpl<T> implements Connections<T> {
     private static ConnectionsImpl<?> instance;
 
     // Maps
-    private final ConcurrentHashMap<Integer, ConnectionHandler<T>> handlers; // connectionId -> handler
-    private final ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConnectionHandler<T>>> channels; // channel -> (uniqueId -> handler)
-    private final ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> connectionChannelIds; // connectionId -> (channel -> uniqueId)
-    private final ConcurrentHashMap<String, String> userCredentials; // username -> password
+    // connection id associated with handler  -> handler
+    private final ConcurrentHashMap<Integer, ConnectionHandler<T>> handlers; 
+
+    // channel -> (subscribe id -> handler)
+    private final ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConnectionHandler<T>>> channels;
+
+    // connection id associated with handler  -> (channel -> uniqueId) his subscribe id
+    private final ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> connectionChannelIds; 
+
+    // username -> password
+    private final ConcurrentHashMap<String, String> userCredentials;
+    
+    // online connectionIds
     private final List<Integer> online;
 
     // Private constructor for Singleton
@@ -44,31 +53,40 @@ public class ConnectionsImpl<T> implements Connections<T> {
         return channels.putIfAbsent(channel, new ConcurrentHashMap<>()) == null;
     }
 
+
     // Subscribe to an existing channel with a unique ID
-    public boolean subscribe(String channel, int connectionId, int uniqueId) {
-        if (!channels.containsKey(channel))
+    public boolean subscribe(String channel, int connectionId, int subscribeid) {
+        if  ( !handlers.containsKey(connectionId)) {//check if the client exist
+             return false; //client does not exist
+         }
+        if (!channels.containsKey(channel))// check if the channel already exist
         {
-        addChannel(channel) ;
+        addChannel(channel) ;// if not adds it
         }
-    //    if  ( !handlers.containsKey(connectionId)) {
-    //         return false; // Channel or client does not exist
-    //     }
-
-        // Add the subscription
-        channels.get(channel).put(uniqueId, handlers.get(connectionId));
-
+        // add to channels map the unique id and the its associated handler
+        if ( connectionChannelIds.containsKey(connectionId) && connectionChannelIds.get(connectionId).containsKey(channel) )
+        {
+            return false ; // the client is already subscribed to this channel
+            
+        }
+        // Add the connection ID to the channel
+        connectionChannelIds.putIfAbsent(connectionId, new ConcurrentHashMap<>());
+        // add to the connectionChannelIds map the channel and the unique id
+        connectionChannelIds.get(connectionId).put(channel, subscribeid);
+        channels.get(channel).put(subscribeid, handlers.get(connectionId));
         // Map the channel and unique ID to the connection ID
-        connectionChannelIds.computeIfAbsent(connectionId, k -> new ConcurrentHashMap<>()).put(channel, uniqueId);
-
+        //connectionChannelIds.computeIfAbsent(connectionId, k -> new ConcurrentHashMap<>()).put(channel, subscribeid);
         return true;
     }
 
     // Unsubscribe from a channel using the unique ID
-    public boolean unsubscribe(String channel, int connectionId) {
-        if (!channels.containsKey(channel) || !connectionChannelIds.containsKey(connectionId)) {
+    public boolean unsubscribe(String channel, int connectionId,int subscriptionid) {
+        boolean test1=channels.containsKey(channel);
+        boolean test2=connectionChannelIds.containsKey(connectionId);
+        
+        if (!channels.containsKey(channel) || !connectionChannelIds.get(connectionId).get(channel).equals(subscriptionid)) {
             return false; // Channel or connection does not exist
         }
-
         // Retrieve the unique ID for the channel
         Integer uniqueId = connectionChannelIds.get(connectionId).remove(channel);
         if (uniqueId != null) {
