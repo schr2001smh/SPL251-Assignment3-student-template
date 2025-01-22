@@ -149,7 +149,7 @@ int main (int argc, char *argv[]) {
     std::string connectMessage = "CONNECT\n"
                                  "accept-version:1.2\n"
                                  "host:stomp.cs.bgu.ac.il\n"
-                                 "login:meni3\n"
+                                 "login:meni\n"
                                  "passcode:films" + std::string(1, '\u0000');
 
     if (!connectionHandler.sendLine(connectMessage)) {

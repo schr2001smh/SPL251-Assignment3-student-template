@@ -23,7 +23,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
     private final ConcurrentHashMap<String, String> userCredentials;
     
     // online connectionIds
-    private final List<Integer> online;
+    private final List<String> online;
+
+    // connection id to the user name
+    private final ConcurrentHashMap<Integer, String> handlerusername;
 
     // Private constructor for Singleton
     private ConnectionsImpl() {
@@ -32,6 +35,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         connectionChannelIds = new ConcurrentHashMap<>();
         userCredentials = new ConcurrentHashMap<>();
         online = new ArrayList<>();
+        handlerusername = new ConcurrentHashMap<>();
         System.out.println("ConnectionsImpl created");
     }
 
@@ -121,9 +125,13 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public boolean disconnect(int connectionId) {
-        if (online.contains(connectionId)) {
-            online.remove(connectionId);
+        String username=handlerusername.get(connectionId);
+
+        if (online.contains(username)) {
+            online.remove(username);
+            handlerusername.remove(username);
         }
+
         // Remove the connectionId from all subscribed channels
         if (connectionChannelIds.containsKey(connectionId)) {
             connectionChannelIds.get(connectionId).forEach((channel, uniqueId) -> {
@@ -135,8 +143,8 @@ public class ConnectionsImpl<T> implements Connections<T> {
                     }
                 }
             });
-
         }
+
         handlers.remove(connectionId);
         connectionChannelIds.remove(connectionId);
         
@@ -153,11 +161,10 @@ public class ConnectionsImpl<T> implements Connections<T> {
     // Add or validate a connection
     public boolean addConnection(int connectionId, String username, String password) {
         // Ensure the connectionId is not already in use
-        if (online.contains(connectionId)) {
+        if (online.contains(username)) {
             return false; // Connection ID already in use
         }
-        online.add(connectionId);
-
+        
         // Check if the user already exists
         if (userCredentials.containsKey(username)) {
             // Validate the password
@@ -169,6 +176,9 @@ public class ConnectionsImpl<T> implements Connections<T> {
             // Add a new user
             userCredentials.put(username, password);
         }
+
+        handlerusername.put(connectionId, username);
+        online.add(username);
         return true;
     }
 } 
