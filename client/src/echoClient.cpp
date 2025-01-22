@@ -41,7 +41,7 @@ std::string handleConnect(const std::string& str) {
     frame += "host:stomp.cs.bgu.ac.il\n";
     frame += "login:" + login + "\n";
     frame += "passcode:" + passcode + "\n";
-    frame += '\u0000';
+    frame += "\n\n" + std::string(1, '\0'); // Add three \n before the null character
     return frame;
 }
 
@@ -53,7 +53,7 @@ std::string handleSend(const std::string& str) {
     std::string frame = "SEND\n";
     frame += "destination:" + destination + "\n";
     frame += "id:" + id + "\n";
-    frame += "\n" + body + '\u0000';
+    frame += "\n" + body + "\n\n" + std::string(1, '\0'); // Add three \n before the null character
     return frame;
 }
 
@@ -83,7 +83,7 @@ std::string handleSubscribe(const std::string& str) {
     std::string frame = "SUBSCRIBE\n";
     frame += "destination:" + destination + "\n";
     frame += "id:" + additionalParam + "\n";
-    frame += '\u0000';
+    frame += "\n\n" + std::string(1, '\0'); // Add three \n before the null character
     return frame;
 }
 
@@ -93,7 +93,7 @@ std::string handleUnsubscribe(const std::string& str) {
     stream >> command >> id;
     std::string frame = "UNSUBSCRIBE\n";
     frame += "id:" + id + "\n";
-    frame += '\u0000';
+    frame += "\n\n" + std::string(1, '\0'); // Add three \n before the null character
     return frame;
 }
 
@@ -103,12 +103,12 @@ std::string handleDisconnect(const std::string& str) {
     stream >> command >> receipt;
     std::string frame = "DISCONNECT\n";
     frame += "receipt:" + receipt + "\n";
-    frame += '\u0000';
+    frame += "\n\n" + std::string(1, '\0'); // Add three \n before the null character
     return frame;
 }
 
 std::string handleError(const std::string& str) {
-    return "ERROR\nmessage:Invalid command\n" + str + '\u0000';
+    return "ERROR\nmessage:Invalid command\n" + str + "\n\n" + std::string(1, '\0'); // Add three \n before the null character
 }
 
 std::string stringToFrame(const std::string& str) {
@@ -145,12 +145,11 @@ int main (int argc, char *argv[]) {
         std::cerr << "Cannot connect to " << host << ":" << port << std::endl;
         return 1;
     }
-
     std::string connectMessage = "CONNECT\n"
                                  "accept-version:1.2\n"
                                  "host:stomp.cs.bgu.ac.il\n"
                                  "login:meni\n"
-                                 "passcode:films" + std::string(1, '\u0000');
+                                 "passcode:films" + std::string(1, '\0'); // Add three \n before the null character
 
     if (!connectionHandler.sendLine(connectMessage)) {
         std::cerr << "Failed to send connect message to " << host << ":" << port << std::endl;
@@ -167,13 +166,11 @@ int main (int argc, char *argv[]) {
         std::cin.getline(buf, bufsize);
         std::string line(buf);
         int len = line.length();
-        
         std::string lineStr(line);
         std::string myFrame = stringToFrame(line);
-        
         std::cout << "THE LINE YOU WROTE IS  ====== \n"+ lineStr +"\n" << std::endl;
         std::cout << "THE COMMAND YOU WROTE IS  ====== \n"+ myFrame +"\n" << std::endl;
-        
+
         if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;

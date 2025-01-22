@@ -37,8 +37,6 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
         while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
         T nextMessage = encdec.decodeNextByte((byte) read);
         if (nextMessage != null) {
-
-
             Frame response = protocol.process((Frame) nextMessage);
             if (response != null) {
             System.out.println("printing response line########### \n"+response);
@@ -62,38 +60,33 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     }
 
 
-  @Override
-public void send(T msg, int id, String channel) {
-    try {
-        // Generate a unique message ID (e.g., using a counter or timestamp)
-        String messageId = String.valueOf(System.currentTimeMillis());
-        // Construct the headers for the MESSAGE frame
-        Map<String, String> headers = new HashMap<>();
-        headers.put("sender", String.valueOf(id)); // Subscription ID
-        headers.put("message-id", messageId);           // Unique message ID
-        headers.put("channel", channel);            // Destination/channel name
-
-        // Create a Frame object for the MESSAGE frame
-        String test=msg.toString();
-        Frame messageFrame = new Frame("MESSAGE", headers, msg.toString());
-
-        // Encode the Frame into bytes
-        byte[] encodedFrame = encdec.encode(messageFrame);
-
-        // Write the encoded frame to the output stream
-        synchronized (this) { // Synchronize to ensure thread safety when writing
-            int totalBytesWritten = 0;
-            int bytesToWrite = encodedFrame.length;
-            while (totalBytesWritten < bytesToWrite) {
-                out.write(encodedFrame, totalBytesWritten, bytesToWrite - totalBytesWritten);
-                totalBytesWritten = bytesToWrite; // All bytes are written in one call
+    @Override
+    public void send(T msg, int id, String channel) {
+        try {
+            // Generate a unique message ID (e.g., using a counter or timestamp)
+            String messageId = String.valueOf(System.currentTimeMillis());
+            // Construct the headers for the MESSAGE frame
+            Map<String, String> headers = new HashMap<>();
+            headers.put("sender", String.valueOf(id)); // Subscription ID
+            headers.put("message-id", messageId);      // Unique message ID
+            headers.put("channel", channel);           // Destination/channel name
+    
+            // Create a Frame object for the MESSAGE frame
+            Frame messageFrame = new Frame("MESSAGE", headers, msg.toString());
+            System.out.println("SERVER ENCODING MESSAGE FRAME******** \n" + messageFrame);
+    
+            // Encode the Frame into bytes
+            byte[] encodedFrame = encdec.encode(messageFrame);
+            System.out.println("SERVER ENCODED MESSAGE FRAME**********\n" + encdec.decodeString(encodedFrame));
+    
+            // Write the encoded frame to the output stream
+            synchronized (this) { // Synchronize to ensure thread safety when writing
+                out.write(encodedFrame);
+                out.flush(); // Flush to ensure the data is sent immediately
             }
-            out.flush(); // Flush to ensure the data is sent immediately
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle any I/O exceptions during writing
         }
-    } catch (IOException e) {
-        e.printStackTrace(); // Handle any I/O exceptions during writing
     }
-}
-
 
 }
