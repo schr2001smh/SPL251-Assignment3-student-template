@@ -11,7 +11,13 @@ int Client::getconnectionNumber() const {
 bool Client::connectionstatus() {
     return connectionHandler.connectionstatus();
 }
+    std::string Client::getname(){
+        return name;
+    }
 
+    void Client::setname(std::string newname){
+        name = newname;
+    }
 // Set the client as connected
 void Client::connected() {
 }
@@ -23,7 +29,6 @@ void Client::disconnected() {
 }
 // Get the counter
 int Client::getcounter() {
-    static int counter = 0;
     return counter++;
 }
 

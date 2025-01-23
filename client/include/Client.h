@@ -8,6 +8,9 @@
 
 class Client {
 public:
+    std::string getname();
+
+    void setname(std::string name);
     
     void connected();
 
@@ -41,4 +44,6 @@ private:
     std::list<std::string> connectedUsers;
     bool isconnected;
     ConnectionHandler& connectionHandler;
+    std::string name;
+    int counter = 0;
 };

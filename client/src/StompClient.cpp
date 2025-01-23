@@ -10,10 +10,7 @@ bool status = false;
 Client myClient;
 
 void listenToServer(ConnectionHandler& connectionHandler) {
-    names_and_events parser;
-    parser = parseEventsFile("/workspaces/SPL251-Assignment3-student-template/client/data/events1.json");
     while (true) {
-    std::cout << "====== \n" << parser.channel_name << "\n" << std::endl;
         std::string answer;
         if (!connectionHandler.getLine(answer)) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
@@ -45,16 +42,31 @@ std::string handleConnect(const std::string& str) {
     return frame;
 }
 
-std::string handleSend(const std::string& str) {
+std::string handleSend(const std::string& str, ConnectionHandler& connectionHandler) {
     std::istringstream stream(str);
-    std::string command, destination, body, id;
-    stream >> command >> destination >> id;
-    std::getline(stream, body);
-    std::string frame = "SEND\n";
-    frame += "destination:" + destination + "\n";
-    frame += "id:" + id + "\n";
-    frame += "\n" + body + "\n" "\0"; // Add three \n before the null character
-    return frame;
+    std::string command, destination;
+    stream >> command >> destination ;
+    std::cout << "THE DESTINATION IS  ====== \n" + destination + "\n" << std::endl;
+    names_and_events parser = parseEventsFile(destination);
+    std::string frame;
+    for (const auto& event : parser.events) {
+        frame = "SEND\n";
+        frame += "destination:"  "/" + parser.channel_name + "\n";
+        frame += "\n";
+        frame += "user:" + event.getEventOwnerUser() + "\n";
+        frame += "city:" + event.get_city() + "\n";
+        frame += "event name" + event.get_name() + "\n";
+        frame += "date time:" + std::to_string(event.get_date_time()) +  "\n";
+        frame += "general information:" "\n";
+        frame += "    active:" + event.get_general_information().begin()->first + "\n";
+        frame += "    forces_arrival_update:" + event.get_general_information().begin()->second + "\n";
+        frame += "description:"   "\n" + event.get_description() +"\n";
+        frame += "\n""\0"; // Add null character at the end
+
+    std::cout << "\n ~~~~~~~~~~ \n" + frame + "\n" << std::endl;
+    connectionHandler.sendLine(frame);
+    }
+    return "handeled";
 }
 
 // Helper function to trim whitespace from both ends of a string
@@ -111,7 +123,7 @@ std::string handleError(const std::string& str) {
     return "ERROR\nmessage:Invalid command\n" + str + "\n" + std::string(1, '\0'); // Add three \n before the null character
 }
 
-std::string stringToFrame(const std::string& str) {
+std::string stringToFrame(const std::string& str, ConnectionHandler& connectionHandler) {
     status = myClient.connectionstatus();
     std::cout << "THE STATUS IS  ====== \n" << status << "\n" << std::endl;
     std::string firstWord;
@@ -125,7 +137,7 @@ std::string stringToFrame(const std::string& str) {
             return "ERROR";
         }
     } else if (firstWord == "report") {
-        return handleSend(str);
+        return handleSend(str,connectionHandler);
     } else if (firstWord == "join") {
         return handleSubscribe(str);
     } else if (firstWord == "exit") {
@@ -153,7 +165,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     Client myClient(connectionHandler);
-
     // Start a new thread to listen to the server
     std::thread listenerThread(listenToServer, std::ref(connectionHandler));
     // Main thread will handle reading input from the terminal and sending it to the server
@@ -162,13 +173,19 @@ int main(int argc, char *argv[]) {
         char buf[bufsize];
         std::cin.getline(buf, bufsize);
         std::string line(buf);
-        std::string myFrame = stringToFrame(line);
+        std::string myFrame = stringToFrame(line,connectionHandler);
         std::cout << "THE LINE YOU WROTE IS  ====== \n" + line + "\n" << std::endl;
+
         if (myFrame == "ERROR") {
             std::cout << "Invalid command, no frame was sent. Please try again." << std::endl;
             continue;
         }
+        if(myFrame == "handeled"){
+            continue;
+        }
+        
         std::cout << "THE COMMAND YOU WROTE IS  ====== \n" + myFrame + "\n" << std::endl;
+
         if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
@@ -179,3 +196,4 @@ int main(int argc, char *argv[]) {
     listenerThread.join();
     return 0;
 }
+///workspaces/SPL251-Assignment3-student-template/client/data/events1.json

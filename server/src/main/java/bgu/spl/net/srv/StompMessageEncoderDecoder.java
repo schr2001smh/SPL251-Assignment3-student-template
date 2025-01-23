@@ -18,6 +18,7 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<Frame> 
         // If we reach the null character (\u0000), parse the accumulated bytes into a Frame
         if (nextByte == '\u0000') {
             String fullMessage = messageBuilder.toString();
+            System.out.println("full message:~~~~~~~~ " + fullMessage);
             if (fullMessage.length() > 0 && fullMessage.charAt(0) == '\n') {
                 fullMessage = fullMessage.substring(1);
             }
