@@ -5,16 +5,12 @@
 #include <locale>
 #include "../include/ConnectionHandler.h"
 #include "../include/Client.h"
-
-bool isconnected = false;
+bool status = false;
 Client myClient;
 
-
 void listenToServer(ConnectionHandler& connectionHandler) {
-    
     while (true) {
         std::string answer;
-
         if (!connectionHandler.getLine(answer)) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
@@ -34,15 +30,14 @@ void listenToServer(ConnectionHandler& connectionHandler) {
 
 std::string handleConnect(const std::string& str) {
     std::istringstream stream(str);
-    std::string command, login, passcode,something;
-    stream >> command >>something>> login >> passcode;
+    std::string command, login, passcode, something;
+    stream >> command >> something >> login >> passcode;
     std::string frame = "CONNECT\n";
     frame += "accept-version:1.2\n";
     frame += "host:stomp.cs.bgu.ac.il\n";
     frame += "login:" + login + "\n";
     frame += "passcode:" + passcode + "\n";
     frame += "\n" "\0"; // Add three \n before the null character
-    //isconnected = true;
     return frame;
 }
 
@@ -74,7 +69,7 @@ std::string handleSubscribe(const std::string& str) {
     int id = myClient.getcounter();
     std::istringstream stream(str);
     std::string command, destination;
-    stream >> command >> destination ;
+    stream >> command >> destination;
     // Trim the input values
     trim(command);
     trim(destination);
@@ -91,7 +86,7 @@ std::string handleUnsubscribe(const std::string& str) {
     std::istringstream stream(str);
     std::string command, channel;
     stream >> command >> channel;
-    int id=myClient.getchannelid(channel);
+    int id = myClient.getchannelid(channel);
     std::string frame = "UNSUBSCRIBE\n";
     frame += "id:" + std::to_string(id) + "\n";
     frame += "\n" "\0"; // Add three \n before the null character
@@ -105,7 +100,6 @@ std::string handleDisconnect(const std::string& str) {
     std::string frame = "DISCONNECT\n";
     frame += "receipt:" + receipt + "\n";
     frame += "\n" "\0"; // Add three \n before the null character
-   // isconnected = false;
     return frame;
 }
 
@@ -114,26 +108,33 @@ std::string handleError(const std::string& str) {
 }
 
 std::string stringToFrame(const std::string& str) {
+    status = myClient.connectionstatus();
+    std::cout << "THE STATUS IS  ====== \n" << status << "\n" << std::endl;
     std::string firstWord;
     std::istringstream stream(str);
     stream >> firstWord;
     if (firstWord == "login") {
-        return handleConnect(str);
+        if (!status) {
+            return handleConnect(str);
+        } else {
+            std::cout << "client already connected\n" << std::endl;
+            return "ERROR";
+        }
     } else if (firstWord == "message") {
         return handleSend(str);
     } else if (firstWord == "join") {
         return handleSubscribe(str);
     } else if (firstWord == "exit") {
         return handleUnsubscribe(str);
-    } else if (firstWord == "logout") {
+    } else if (firstWord == "logout" && status) {
+        myClient.disconnected();
         return handleDisconnect(str);
     } else {
         return "ERROR";
     }
 }
 
-int main (int argc, char *argv[]) {
-    myClient = Client();
+int main(int argc, char *argv[]) {
     if (argc < 3) {
         std::cerr << "Usage: " << argv[0] << " host port" << std::endl << std::endl;
         return -1;
@@ -146,16 +147,7 @@ int main (int argc, char *argv[]) {
         std::cerr << "Cannot connect to " << host << ":" << port << std::endl;
         return 1;
     }
-    // std::string connectMessage = "CONNECT\n"
-    //                              "accept-version:1.2\n"
-    //                              "host:stomp.cs.bgu.ac.il\n"
-    //                              "login:meni1234" "\n" 
-    //                              "passcode:films" "std::string(1, '\0')"; // Add three \n before the null character
-
-    // if (!connectionHandler.sendLine(connectMessage)) {
-    //     std::cerr << "Failed to send connect message to " << host << ":" << port << std::endl;
-    //     return 1;
-    // }
+    Client myClient(connectionHandler);
 
     // Start a new thread to listen to the server
     std::thread listenerThread(listenToServer, std::ref(connectionHandler));
@@ -165,20 +157,17 @@ int main (int argc, char *argv[]) {
         char buf[bufsize];
         std::cin.getline(buf, bufsize);
         std::string line(buf);
-        int len = line.length();
-        std::string lineStr(line);
         std::string myFrame = stringToFrame(line);
-        std::cout << "THE LINE YOU WROTE IS  ====== \n"+ lineStr +"\n" << std::endl;
-		if (myFrame=="ERROR") {
-			std::cout << "Invalid command,no frame was sent. Please try again." << std::endl;
-			continue;
-		}
-		std::cout << "THE COMMAND YOU WROTE IS  ====== \n" + myFrame + "\n" << std::endl;
-		if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
-			std::cout << "Disconnected. Exiting...\n" << std::endl;
-			break;
-		}
-        // connectionHandler.sendLine(myFrame) appends '\n' to the message. Therefore we send len+1 bytes.
+        std::cout << "THE LINE YOU WROTE IS  ====== \n" + line + "\n" << std::endl;
+        if (myFrame == "ERROR") {
+            std::cout << "Invalid command, no frame was sent. Please try again." << std::endl;
+            continue;
+        }
+        std::cout << "THE COMMAND YOU WROTE IS  ====== \n" + myFrame + "\n" << std::endl;
+        if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
+            std::cout << "Disconnected. Exiting...\n" << std::endl;
+            break;
+        }
     }
 
     // Wait for the listener thread to finish

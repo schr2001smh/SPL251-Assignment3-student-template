@@ -12,9 +12,17 @@ private:
 	const short port_;
 	boost::asio::io_service io_service_;   // Provides core I/O functionality
 	tcp::socket socket_;
+	bool isconnected;
+	
 
 public:
+
+	bool connectionstatus();
+	void disconncted();
+
 	ConnectionHandler(std::string host, short port);
+	ConnectionHandler();
+
 
 	virtual ~ConnectionHandler();
 

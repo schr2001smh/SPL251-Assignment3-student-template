@@ -1,13 +1,26 @@
 #include "../include/Client.h"
 
 // Constructor
-Client::Client() : connectionNumber(0) {}
-
+Client::Client(ConnectionHandler& handler) : connectionNumber(0), isconnected(false),connectionHandler(handler){}
+Client::Client() : connectionNumber(0), isconnected(false), connectionHandler(*(new ConnectionHandler)) {}
 // Get the connection number
 int Client::getconnectionNumber() const {
     return connectionNumber;
 }
+// Check if the client is connected
+bool Client::connectionstatus() {
+    return connectionHandler.connectionstatus();
+}
 
+// Set the client as connected
+void Client::connected() {
+}
+
+// Set the client as disconnected
+void Client::disconnected() {
+    isconnected = false;
+    connectionHandler.disconncted();
+}
 // Get the counter
 int Client::getcounter() {
     static int counter = 0;

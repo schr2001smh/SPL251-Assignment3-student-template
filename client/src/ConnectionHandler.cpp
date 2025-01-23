@@ -5,7 +5,11 @@
 using boost::asio::ip::tcp;
 
 ConnectionHandler::ConnectionHandler(std::string host, short port) :
-    host_(host), port_(port), io_service_(), socket_(io_service_) {}
+    host_(host), port_(port), io_service_(), socket_(io_service_),isconnected(false) {
+    isconnected = false;
+    }
+    ConnectionHandler::ConnectionHandler() :
+    host_(""), port_(0), io_service_(), socket_(io_service_),isconnected(false) {}
 
 ConnectionHandler::~ConnectionHandler() {
     close();
@@ -51,6 +55,13 @@ bool ConnectionHandler::sendBytes(const char *bytes, int bytesToWrite) {
     }
     return true;
 }
+bool ConnectionHandler::connectionstatus() {
+    return isconnected;
+}
+
+void ConnectionHandler::disconncted() {
+    isconnected = false;
+}
 
 bool ConnectionHandler::getLine(std::string &line) {
     return getFrameAscii(line, '\n');
@@ -62,6 +73,8 @@ bool ConnectionHandler::sendLine(std::string &line) {
 
 bool ConnectionHandler::getFrameAscii(std::string &frame, char delimiter) {
     char ch;
+    std::string command;
+    bool isFirstLine = true;
     // Stop when we encounter the null character.
     // Notice that the null character is not appended to the frame string.
     try {
@@ -73,6 +86,15 @@ bool ConnectionHandler::getFrameAscii(std::string &frame, char delimiter) {
                 frame.append(1, '\n'); // Replace special character with newline
             } else if (ch != '\0') {
                 frame.append(1, ch);
+                if (isFirstLine && ch == '\n') {
+                    command = frame.substr(0, frame.find('\n'));
+                    std::cout << "Command: " << command << std::endl;
+                    if (command=="CONNECTED"&&isFirstLine)
+                    {
+                        isconnected = true;
+                    }
+                    isFirstLine = false;
+                }
             }
         } while (delimiter != ch);
     } catch (std::exception &e) {

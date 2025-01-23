@@ -4,10 +4,19 @@
 #include <map>
 #include <list>
 #include <string>
+#include "../include/ConnectionHandler.h"
 
 class Client {
 public:
+    
+    void connected();
+
+    void disconnected();
+
+    bool connectionstatus() ;
+
     // Constructor
+    Client(ConnectionHandler& connectionHandler);
     Client();
 
     int getconnectionNumber() const;
@@ -30,4 +39,6 @@ private:
     std::map<std::string, int> subscriptions;
     int connectionNumber;
     std::list<std::string> connectedUsers;
+    bool isconnected;
+    ConnectionHandler& connectionHandler;
 };
