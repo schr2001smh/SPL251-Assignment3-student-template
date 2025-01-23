@@ -4,12 +4,16 @@
 #include <cctype>
 #include <locale>
 #include "../include/ConnectionHandler.h"
+#include "../include/event.h"
 #include "../include/Client.h"
 bool status = false;
 Client myClient;
 
 void listenToServer(ConnectionHandler& connectionHandler) {
+    names_and_events parser;
+    parser = parseEventsFile("/workspaces/SPL251-Assignment3-student-template/client/data/events1.json");
     while (true) {
+    std::cout << "====== \n" << parser.channel_name << "\n" << std::endl;
         std::string answer;
         if (!connectionHandler.getLine(answer)) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
@@ -120,7 +124,7 @@ std::string stringToFrame(const std::string& str) {
             std::cout << "client already connected\n" << std::endl;
             return "ERROR";
         }
-    } else if (firstWord == "message") {
+    } else if (firstWord == "report") {
         return handleSend(str);
     } else if (firstWord == "join") {
         return handleSubscribe(str);
@@ -135,6 +139,7 @@ std::string stringToFrame(const std::string& str) {
 }
 
 int main(int argc, char *argv[]) {
+    
     if (argc < 3) {
         std::cerr << "Usage: " << argv[0] << " host port" << std::endl << std::endl;
         return -1;
