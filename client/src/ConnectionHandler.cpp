@@ -76,6 +76,7 @@ bool ConnectionHandler::getFrameAscii(std::string &frame, char delimiter) {
     char ch;
     std::string command;
     bool isFirstLine = true;
+    std::string tempFrame;
     // Stop when we encounter the null character.
     // Notice that the null character is not appended to the frame string.
     try {
@@ -84,19 +85,19 @@ bool ConnectionHandler::getFrameAscii(std::string &frame, char delimiter) {
                 return false;
             }
             if (ch == '#') {
-                frame.append(1, '\n'); // Replace special character with newline
+                tempFrame.append(1, '\n'); // Replace special character with newline
             } else if (ch != '\0') {
-                frame.append(1, ch);
+                tempFrame.append(1, ch);
                 if (isFirstLine && ch == '\n') {
-                    command = frame.substr(0, frame.find('\n'));
-                    if (command=="CONNECTED"&&isFirstLine)
-                    {
+                    command = tempFrame.substr(0, tempFrame.find('\n'));
+                    if (command == "CONNECTED") {
                         isconnected = true;
                     }
                     isFirstLine = false;
                 }
             }
         } while (delimiter != ch);
+        frame = tempFrame; // Assign the accumulated frame to the output parameter
     } catch (std::exception &e) {
         std::cerr << "recv failed (Error: " << e.what() << ')' << std::endl;
         return false;

@@ -14,7 +14,7 @@ private:
 	boost::asio::io_service io_service_;   // Provides core I/O functionality
 	tcp::socket socket_;
 	bool isconnected;
-	//std::map<std::string, std::map<std::string,event>> events;
+	
 	
 
 public:

@@ -51,7 +51,6 @@ public class Frame {
         for (Map.Entry<String, String> header : headers.entrySet()) {
             frameBuilder.append(header.getKey()).append(":").append(header.getValue()).append("\n");
         }
-        frameBuilder.append("#\n"); // Special character instead of an empty line
         // Debug statement to print the body
         System.out.println("Body: " + body);
         // Null check before appending the body

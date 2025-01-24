@@ -5,10 +5,15 @@
 #include <list>
 #include <string>
 #include "../include/ConnectionHandler.h"
+#include "../include/event.h"
 
 class Client {
 public:
     std::string getname();
+    
+    void summary(std::string channelName, std::string userName,std::string location);
+
+    void sethandler(ConnectionHandler& handler);
 
     void setname(std::string name);
     
@@ -37,6 +42,7 @@ public:
 
     // Print client information
     void printInfo() const;
+    void addevent(Event event);
 
 private:
     std::map<std::string, int> subscriptions;
@@ -46,4 +52,6 @@ private:
     ConnectionHandler& connectionHandler;
     std::string name;
     int counter = 0;
+    std::map<std::string,std::map<std::string,std::list<Event>>> events;
+    
 };
