@@ -16,12 +16,21 @@ void listenToServer(ConnectionHandler& connectionHandler) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
         }
+
         
         int len = answer.length();
         if (len > 0) {
             answer.resize(len - 1); // Remove the newline character
         }
-        std::cout << answer << " "  << std::endl << std::endl;
+
+        std::istringstream iss(answer);
+        std::string firstWord;
+        iss >> firstWord;
+        if (firstWord == "SEND") {
+            std::cout << "First line of answer is SEND" << std::endl;//save frame
+        }
+
+        std::cout << answer << "answer from server"  << std::endl << std::endl;
         if (answer == "bye") {
             std::cout << "Exiting...\n" << std::endl;
             break;

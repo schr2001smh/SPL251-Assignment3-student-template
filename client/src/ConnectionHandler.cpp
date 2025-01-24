@@ -64,7 +64,8 @@ void ConnectionHandler::disconncted() {
 }
 
 bool ConnectionHandler::getLine(std::string &line) {
-    return getFrameAscii(line, '\n');
+    bool result = getFrameAscii(line, '\n');
+    return result;
 }
 
 bool ConnectionHandler::sendLine(std::string &line) {
@@ -88,7 +89,6 @@ bool ConnectionHandler::getFrameAscii(std::string &frame, char delimiter) {
                 frame.append(1, ch);
                 if (isFirstLine && ch == '\n') {
                     command = frame.substr(0, frame.find('\n'));
-                    std::cout << "Command: " << command << std::endl;
                     if (command=="CONNECTED"&&isFirstLine)
                     {
                         isconnected = true;
