@@ -52,7 +52,6 @@ public class Frame {
             frameBuilder.append(header.getKey()).append(":").append(header.getValue()).append("\n");
         }
         // Debug statement to print the body
-        System.out.println("Body: " + body);
         // Null check before appending the body
         if (body != null) {
             frameBuilder.append(body);

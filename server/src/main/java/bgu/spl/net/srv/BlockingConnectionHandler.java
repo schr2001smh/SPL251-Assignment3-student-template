@@ -65,11 +65,22 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
         try {
             // Generate a unique message ID (e.g., using a counter or timestamp)
             String messageId = String.valueOf(System.currentTimeMillis());
-            // Construct the headers for the MESSAGE frame
+            // Extract the value between "user:" and the next "\n" into a string
+            String msgStr = msg.toString();
+            String userValue = "";
+            int userIndex = msgStr.indexOf("user:");
+            if (userIndex != -1) {
+                int endIndex = msgStr.indexOf("\n", userIndex);
+                if (endIndex != -1) {
+                    userValue = msgStr.substring(userIndex + 5, endIndex).trim();
+                } else {
+                    userValue = msgStr.substring(userIndex + 5).trim();
+                }
+            }
             Map<String, String> headers = new HashMap<>();
-            headers.put("sender", String.valueOf(id)); // Subscription ID
+            headers.put("user", userValue); // Subscription ID
             headers.put("message-id", messageId);      // Unique message ID
-            headers.put("channel", channel);           // Destination/channel name
+            headers.put("destination", channel);           // Destination/channel name
     
             // Create a Frame object for the MESSAGE frame
             Frame messageFrame = new Frame("MESSAGE", headers, msg.toString());

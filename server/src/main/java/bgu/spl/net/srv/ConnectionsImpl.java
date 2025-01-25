@@ -109,16 +109,22 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     @Override
     public boolean send(String channel, T msg , int connectionId) {
-        int uniqueid =  connectionChannelIds.get(connectionId).get(channel) ;
-        ConcurrentHashMap<Integer, ConnectionHandler<T>> subscribers = channels.get(channel);
-        if (subscribers != null) {
 
-            for (ConnectionHandler<T> handler : subscribers.values()) {
-                handler.send(msg,uniqueid , channel);
+        if (connectionChannelIds.get(connectionId)!=null) {
+            String tempchannel = channel.substring(1);
+            int uniqueid =  connectionChannelIds.get(connectionId).get(tempchannel) ;
+            ConcurrentHashMap<Integer, ConnectionHandler<T>> subscribers = channels.get(tempchannel);
+
+            if (subscribers != null) {
+                
+                for (ConnectionHandler<T> handler : subscribers.values()) {
+                    handler.send(msg,uniqueid , channel);
+                }
+                return true ;
             }
-            return true ;
+            return false ;
         }
-        return false ;
+        return true;// the client is not subscribed to this channel
     }
 
 

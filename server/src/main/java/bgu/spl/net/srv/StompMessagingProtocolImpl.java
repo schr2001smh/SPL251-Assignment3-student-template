@@ -157,7 +157,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
         if (destination == null) {
             return buildErrorFrame("Missing destination header", this.connectionId);
         }
-
         if (!connections.send(destination, frame.getBody() , connectionId))
         {
             this.shouldTerminate = true ;
@@ -165,7 +164,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
         }
         return null;
     }
-
     private Frame handleDisconnect(Frame frame) {
 
         if(!connections.disconnect(this.connectionId))
