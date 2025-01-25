@@ -10,6 +10,7 @@ bool status;
 Client myClient;
 std::string myname;
 std::string destination;
+std::mutex lock;
 
 void listenToServer(ConnectionHandler& connectionHandler) {
     std::string  message;
@@ -65,7 +66,9 @@ std::string handleSend(const std::string& str, ConnectionHandler& connectionHand
     std::string command, destination;
     stream >> command >> destination;
     std::cout << "THE DESTINATION IS  ====== \n" + destination + "\n" << std::endl;
+    lock.lock();
     names_and_events parser = parseEventsFile(destination);
+    lock.unlock();
     std::string frame;
     for (const auto& event : parser.events) {
         frame = "SEND\n";
@@ -84,6 +87,7 @@ std::string handleSend(const std::string& str, ConnectionHandler& connectionHand
         connectionHandler.sendLine(frame);
     }
     return "handled";
+
 }
 
 // Helper function to trim whitespace from both ends of a string
@@ -147,7 +151,9 @@ std::string handlesummary(const std::string& str) {
     std::string command, channel_name, user, file;
     stream >> command >> channel_name >> user >> file;
     // Call the client's summary function with the provided parameters
+    lock.lock();
     myClient.summary("/"+channel_name, user, file);
+    lock.unlock();
     return "handled";
 }
 
