@@ -16,6 +16,7 @@ void listenToServer(ConnectionHandler& connectionHandler) {
     std::string  message;
     while (true) {
         std::string line;
+
         if (!connectionHandler.getLine(line)) {
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
@@ -24,7 +25,6 @@ void listenToServer(ConnectionHandler& connectionHandler) {
             status = true;
         }
         message += line;
-        
         if (line.rfind("destination:/", 0) == 0) {
             size_t endPos = line.find('\n', 12); // Find the position of the first newline after "destination:/"
             if (endPos != std::string::npos) {
@@ -44,6 +44,12 @@ void listenToServer(ConnectionHandler& connectionHandler) {
             }
             message.clear(); // Clear the message buffer for the next message
         }
+        if (message!=""||message!="\n")
+        {
+            std::cout <<"message from the server :\n" + message << std::endl;
+        }
+        
+        
     }
 }
 
