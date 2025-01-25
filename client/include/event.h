@@ -33,6 +33,7 @@ public:
     const std::string &get_description() const;
     const std::string &get_name() const;
     int get_date_time() const;
+    void set_channel(std::string name) ;
     const std::map<std::string, std::string> &get_general_information() const;
 };
 

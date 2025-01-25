@@ -32,6 +32,9 @@ Event::Event(std::string channel_name, std::string city, std::string name, int d
 Event::~Event()
 {
 }
+void Event::set_channel(std::string name) {
+    this->channel_name = name;
+}
 
 void Event::setEventOwnerUser(std::string setEventOwnerUser) {
     eventOwnerUser = setEventOwnerUser;

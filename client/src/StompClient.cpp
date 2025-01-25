@@ -9,6 +9,7 @@
 bool status;
 Client myClient;
 std::string myname;
+std::string destination;
 
 void listenToServer(ConnectionHandler& connectionHandler) {
     std::string  message;
@@ -22,9 +23,22 @@ void listenToServer(ConnectionHandler& connectionHandler) {
             status = true;
         }
         message += line;
-        if ( message.size() >= 2 && message.substr(message.size() - 2) == "\n\n") { // Check for end of message
-            if (message.substr(0, 4) == "SEND") {
+        
+        if (line.rfind("destination:/", 0) == 0) {
+            size_t endPos = line.find('\n', 12); // Find the position of the first newline after "destination:/"
+            if (endPos != std::string::npos) {
+            destination = line.substr(12, endPos - 12); // Extract the text between "destination:/" and the first newline
+            } else {
+            destination = line.substr(12); // If no newline is found, extract the rest of the string
+            }
+            std::cout << "Destination message: " << destination << std::endl;
+        }
+        
+        if (message.size() >= 2 && message.substr(message.size() - 2) == "\n\n") { // Check for end of message
+        std::string temp = message.substr(0, 4);
+            if (temp == "user") {
             Event event(static_cast<const std::string&>(message));
+            event.set_channel(destination);
             myClient.addevent(event);
             }
             message.clear(); // Clear the message buffer for the next message
@@ -54,7 +68,6 @@ std::string handleSend(const std::string& str, ConnectionHandler& connectionHand
     names_and_events parser = parseEventsFile(destination);
     std::string frame;
     for (const auto& event : parser.events) {
-
         frame = "SEND\n";
         frame += "destination:/" + parser.channel_name + "\n";
         frame += "\n";
@@ -63,11 +76,10 @@ std::string handleSend(const std::string& str, ConnectionHandler& connectionHand
         frame += "event name:" + event.get_name() + "\n";
         frame += "date time:" + std::to_string(event.get_date_time()) + "\n";
         frame += "general information:\n";
-        frame += "    active:" + event.get_general_information().at("active") + "\n";
-        frame += "    forces_arrival_at_scene:" + event.get_general_information().at("forces_arrival_at_scene") + "\n";
-        frame += "description:\n" + event.get_description() + "\n";
-        frame += "\n\0"; // Add null character at the end
-
+        frame += "        active:" + event.get_general_information().at("active") + "\n";
+        frame += "        forces_arrival_at_scene:" + event.get_general_information().at("forces_arrival_at_scene") + "\n";
+        frame += "description:\n" + event.get_description()+"\n";
+        frame += "\0"; // Add null character at the end
         std::cout << "\n ~~~~~~~~~~ \n" + frame + "\n" << std::endl;
         connectionHandler.sendLine(frame);
     }
@@ -135,7 +147,7 @@ std::string handlesummary(const std::string& str) {
     std::string command, channel_name, user, file;
     stream >> command >> channel_name >> user >> file;
     // Call the client's summary function with the provided parameters
-    myClient.summary(channel_name, user, file);
+    myClient.summary("/"+channel_name, user, file);
     return "handled";
 }
 
@@ -159,7 +171,7 @@ std::string stringToFrame(const std::string& str, ConnectionHandler& connectionH
     } else if (firstWord == "logout" && status) {
         
         return handleDisconnect(str);
-    }else if(firstWord == "summary" && !status){
+    }else if(firstWord == "summary" && status){
         return handlesummary(str);
     }
     else {
@@ -182,9 +194,9 @@ int main(int argc, char *argv[]) {
         std::cerr << "Cannot connect to " << host << ":" << port << std::endl;
         return 1;
     }
-    Client myClient(connectionHandler);
     // Start a new thread to listen to the server
     std::thread listenerThread(listenToServer, std::ref(connectionHandler));
+    Client myClient(connectionHandler);
     // Main thread will handle reading input from the terminal and sending it to the server
     while (true) {
         const short bufsize = 1024;
@@ -197,17 +209,15 @@ int main(int argc, char *argv[]) {
             std::cout << "Invalid command, no frame was sent. Please try again." << std::endl;
             continue;
         }
-        if(myFrame == "handeled"){
-            continue;
-        }
-        
         std::cout << "THE COMMAND YOU WROTE IS  ====== \n" + myFrame + "\n" << std::endl;
 
-        if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
+        if (myFrame != "handled") {
+            if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
             std::cout << "Disconnected. Exiting...\n" << std::endl;
             break;
+            }
         }
-    }
+        }
 
     // Wait for the listener thread to finish
     listenerThread.join();
