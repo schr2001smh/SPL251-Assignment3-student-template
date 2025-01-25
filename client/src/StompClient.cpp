@@ -109,7 +109,9 @@ static inline void trim(std::string &s) {
 }
 
 std::string handleSubscribe(const std::string& str) {
-    int id = myClient.getcounter();
+    int id = std::chrono::duration_cast<std::chrono::milliseconds>(
+                 std::chrono::system_clock::now().time_since_epoch()).count();
+
     std::istringstream stream(str);
     std::string command, destination;
     stream >> command >> destination;
@@ -208,7 +210,7 @@ int main(int argc, char *argv[]) {
     }
     // Start a new thread to listen to the server
     std::thread listenerThread(listenToServer, std::ref(connectionHandler));
-    Client myClient(connectionHandler);
+     Client myClient(connectionHandler);
     // Main thread will handle reading input from the terminal and sending it to the server
     while (true) {
         const short bufsize = 1024;

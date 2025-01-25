@@ -87,14 +87,12 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
             // Return an ERROR frame if the "destination" header is missing
             return buildErrorFrame("Missing destination header for subscription", this.connectionId);
         }
-    
         // Parse the "id" header (unique subscription ID)
         String uniqueIdStr = frame.getHeaders().get("id");
         if (uniqueIdStr == null) {
             // Return an ERROR frame if the "id" header is missing
             return buildErrorFrame("Missing unique subscription ID (id header)", this.connectionId);
         }
-    
         // Convert the unique ID to an integer
         int uniqueId;
         try {
@@ -103,9 +101,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
             // Return an ERROR frame if the "id" header is not a valid integer
             return buildErrorFrame("Invalid unique subscription ID: " + uniqueIdStr, this.connectionId);
         }
-
         if (!connections.subscribe(destination, this.connectionId, uniqueId)) {
-
             return buildErrorFrame("Failed to subscribe to channel: " + destination, this.connectionId);
         }
         subscribedTopics.add(destination) ;
@@ -144,6 +140,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<Frame>
        {
         return buildErrorFrame("did not unsuscribe ", subscribtionid) ;
        }
+       
        subscribedTopics.remove(destination) ;
        subscriptionId.remove(subscribtionid) ;
        return createReceiptFrame(subscribtionid); 
