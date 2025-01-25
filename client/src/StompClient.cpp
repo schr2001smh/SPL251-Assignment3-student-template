@@ -42,11 +42,8 @@ void listenToServer(ConnectionHandler& connectionHandler) {
             event.set_channel(destination);
             myClient.addevent(event);
             }
+            std::cout <<"message recieved from the server :\n ----------- \n" + message << std::endl;
             message.clear(); // Clear the message buffer for the next message
-        }
-        if (message!=""||message!="\n")
-        {
-            std::cout <<"message from the server :\n" + message << std::endl;
         }
         
         
@@ -147,6 +144,7 @@ std::string handleDisconnect(const std::string& str) {
     std::string frame = "DISCONNECT\n";
     frame += "receipt:" + std::to_string(receipt1) + "\n";
     frame += "\n" "\0"; // Add three \n before the null character
+    std::cout << "logged out....\n" << std::endl;
     return frame;
 }
 
@@ -223,8 +221,7 @@ int main(int argc, char *argv[]) {
             std::cout << "Invalid command, no frame was sent. Please try again." << std::endl;
             continue;
         }
-        std::cout << "THE COMMAND YOU WROTE IS  ====== \n" + myFrame + "\n" << std::endl;
-
+        std::cout << "Frame sent to server is ====== \n" + myFrame + "\n" << std::endl;
         if (myFrame != "handled") {
             if (!connectionHandler.sendLine(myFrame)) { // Send the frame instead of the raw line
             std::cout << "Disconnected. Exiting...\n" << std::endl;
